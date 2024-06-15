@@ -1,0 +1,14 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>synchron_blue.png</file>
+    <file>synchron_red.png</file>
+    <file>open-folder.png</file>
+    <file>google-docs.png</file>
+    <file>close.png</file>
+    <file>minus.png</file>
+    <file>plus.png</file>
+    <file>delete_on.png</file>
+    <file>delete.png</file>
+    <file>search.png</file>
+  </qresource>
+</RCC>
