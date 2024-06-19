@@ -42,16 +42,16 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
         self.download_id = None
         self.log = []
 
-        self.btn_search.clicked.connect(self.onSearchClicked)
-        self.btn_clear.clicked.connect(self.onClearClicked)
+        # self.btn_search.clicked.connect(self.onSearchClicked)
+        # self.btn_clear.clicked.connect(self.onClearClicked)
         self.btn_import.clicked.connect(self.onImportClicked)
         self.btn_importb.clicked.connect(self.onImportBatchClicked)
         self.btn_addman.clicked.connect(self.onManualClicked)
-        self.btn_add_key.clicked.connect(self.onAddKeywordClicked)
-        self.btn_add_note.clicked.connect(self.onAddNoteClicked)
-        self.btn_mdf.clicked.connect(self.onModifyClicked)
-        self.btn_download.clicked.connect(self.onDownloadClicked)
-        self.btn_sync.clicked.connect(self.onNoteSynchronousClicked)
+        # self.btn_add_key.clicked.connect(self.onAddKeywordClicked)
+        # self.btn_add_note.clicked.connect(self.onAddNoteClicked)
+        # self.btn_mdf.clicked.connect(self.onModifyClicked)
+        # self.btn_download.clicked.connect(self.onDownloadClicked)
+        # self.btn_sync.clicked.connect(self.onNoteSynchronousClicked)
         # self.btn_sync_r.clicked.connect(self.onNoteSynchronousClicked)
 
         def temp_anchor_fcn(path):
@@ -267,15 +267,15 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
 
     # others
     def changeState(self, state: bool):
-        self.btn_search.setEnabled(state)
-        self.btn_clear.setEnabled(state)
-        self.btn_download.setEnabled(state)
+        # self.btn_search.setEnabled(state)
+        # self.btn_clear.setEnabled(state)
+        # self.btn_download.setEnabled(state)
         self.textedit_search.setEnabled(state)
         self.list_searchs.setEnabled(state)
 
-    def syncState(self, state: bool):
-        self.btn_sync.setEnabled(state)
-        self.btn_sync_r.setEnabled(state)
+    # def syncState(self, state: bool):
+    #     self.btn_sync.setEnabled(state)
+    #     self.btn_sync_r.setEnabled(state)
 
     def print(self, content):
         self.log.append(content)
@@ -342,53 +342,53 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
             self.print(fmt.RED_BOLD("Imported successfully!"))
         # self.showViewList()
     
-    def onAddKeywordClicked(self):
-        self.print("[DEBUG] Enter _onAddKeywordClicked function")
-        if not self.focus_id:
-            self.print(fmt.RED_BOLD("No valid article selected"))
-            return
-        dialog = LKeywordDialog(self, 'Add keyword')
-        if dialog.exec_() == QDialog.Rejected:
-            return
-        keywords: List[str] = dialog.get_data()
-        act.addKeywords(keywords)
-        if self.getPageIndex("stacked") == 1:
-            self.showArticleModifer(self.focus_id, ["kwd"])
-        else:
-            self.showArticleMain(self.focus_id)
+    # def onAddKeywordClicked(self):
+    #     self.print("[DEBUG] Enter _onAddKeywordClicked function")
+    #     if not self.focus_id:
+    #         self.print(fmt.RED_BOLD("No valid article selected"))
+    #         return
+    #     dialog = LKeywordDialog(self, 'Add keyword')
+    #     if dialog.exec_() == QDialog.Rejected:
+    #         return
+    #     keywords: List[str] = dialog.get_data()
+    #     act.addKeywords(keywords)
+    #     if self.getPageIndex("stacked") == 1:
+    #         self.showArticleModifer(self.focus_id, ["kwd"])
+    #     else:
+    #         self.showArticleMain(self.focus_id)
 
-    def onAddNoteClicked(self):
-        self.print("[DEBUG] Enter _onAddNoteClicked function")
-        if not self.focus_id:
-            self.print(fmt.RED_BOLD("No valid article selected"))
-            return
-        dialog = LNoteDialog(self, 'Add note')
-        if dialog.exec_() == QDialog.Rejected:
-            return
-        data = dialog.get_data()
-        act.addNote(data)
-        if self.getPageIndex("stacked") == 1:
-            self.showArticleModifer(self.focus_id, ["notes"])
-        else:
-            self.showArticleMain(self.focus_id)
+    # def onAddNoteClicked(self):
+    #     self.print("[DEBUG] Enter _onAddNoteClicked function")
+    #     if not self.focus_id:
+    #         self.print(fmt.RED_BOLD("No valid article selected"))
+    #         return
+    #     dialog = LNoteDialog(self, 'Add note')
+    #     if dialog.exec_() == QDialog.Rejected:
+    #         return
+    #     data = dialog.get_data()
+    #     act.addNote(data)
+    #     if self.getPageIndex("stacked") == 1:
+    #         self.showArticleModifer(self.focus_id, ["notes"])
+    #     else:
+    #         self.showArticleMain(self.focus_id)
 
-    def onDownloadClicked(self):
-        self.print("[DEBUG] Enter _onDownloadClicked function")
-        if not self.focus_id:
-            self.print(fmt.RED_BOLD("No valid article selected"))
-            return
-        article = act.getArticle(self.focus_id)
-        if not article.doi:
-            self.print(fmt.RED_BOLD("No valid url found"))
-            return
-        self.download_id = self.focus_id
+    # def onDownloadClicked(self):
+    #     self.print("[DEBUG] Enter _onDownloadClicked function")
+    #     if not self.focus_id:
+    #         self.print(fmt.RED_BOLD("No valid article selected"))
+    #         return
+    #     article = act.getArticle(self.focus_id)
+    #     if not article.doi:
+    #         self.print(fmt.RED_BOLD("No valid url found"))
+    #         return
+    #     self.download_id = self.focus_id
 
-        path = fmt.absolute_path(article.local_path) or fmt.absolute_path(article.doi + ".pdf")
-        self.worker = DownloadWorker(article.doi, path)
-        self.worker.update_progress.connect(self.onDownloadProgress)
-        self.worker.terminate_progress.connect(self.onDownloadTerminated)
-        self.worker.finished.connect(self.onDownloadFinished)
-        self.worker.start()
+    #     path = fmt.absolute_path(article.local_path) or fmt.absolute_path(article.doi + ".pdf")
+    #     self.worker = DownloadWorker(article.doi, path)
+    #     self.worker.update_progress.connect(self.onDownloadProgress)
+    #     self.worker.terminate_progress.connect(self.onDownloadTerminated)
+    #     self.worker.finished.connect(self.onDownloadFinished)
+    #     self.worker.start()
 
     def onDownloadProgress(self, percentage):
         self.log = []
@@ -424,26 +424,26 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
         self.clearArticleModifer(self)
         self.print(fmt.RED_BOLD("Noop!"))
 
-    def onModifyClicked(self):
-        self.print("[DEBUG] Enter _onModifyClicked function")
-        if not self.focus_id:
-            self.print(fmt.RED_BOLD("No valid article selected"))
-            return
-        self.btn_mdf.setText("Finish")
-        self.btn_mdf.clicked.disconnect()
-        self.btn_mdf.clicked.connect(self.onFinishClicked)
-        self.setPageIndex(1, "stacked")
-        self.showArticleModifer(self.focus_id, ["all"])
-        self.changeState(False)
+    # def onModifyClicked(self):
+    #     self.print("[DEBUG] Enter _onModifyClicked function")
+    #     if not self.focus_id:
+    #         self.print(fmt.RED_BOLD("No valid article selected"))
+    #         return
+    #     self.btn_mdf.setText("Finish")
+    #     self.btn_mdf.clicked.disconnect()
+    #     self.btn_mdf.clicked.connect(self.onFinishClicked)
+    #     self.setPageIndex(1, "stacked")
+    #     self.showArticleModifer(self.focus_id, ["all"])
+    #     self.changeState(False)
 
-    def onFinishClicked(self):
-        self.print("[DEBUG] Enter _onFinishClicked function")
-        self.btn_mdf.setText("Modified")
-        self.btn_mdf.clicked.disconnect()
-        self.btn_mdf.clicked.connect(self.onModifyClicked)
-        self.setPageIndex(0, "stacked")
-        self.showArticleMain(self.focus_id)
-        self.changeState(True)
+    # def onFinishClicked(self):
+    #     self.print("[DEBUG] Enter _onFinishClicked function")
+    #     self.btn_mdf.setText("Modified")
+    #     self.btn_mdf.clicked.disconnect()
+    #     self.btn_mdf.clicked.connect(self.onModifyClicked)
+    #     self.setPageIndex(0, "stacked")
+    #     self.showArticleMain(self.focus_id)
+    #     self.changeState(True)
 
     def onArticleModifierDoubleClicked(self, widget: QWidget, params):
         self.print("[DEBUG] Enter _onArticleModifierDoubleClicked function")
@@ -494,57 +494,57 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
         act.resetNote(data, note)
         self.showArticleModifer(self.focus_id, ["notes"])
 
-    def onNoteSynchronousClicked(self):
-        self.print("[DEBUG] Enter _onNoteSynchronousClicked function")
-        assert(self.focus_id)
-        article = act.getArticle(self.focus_id)
-        assert(article.local_path)
-        notes = opn.get_article_notes(article)
-        annots = extract_annotations(fmt.absolute_path(article.local_path))
+    # def onNoteSynchronousClicked(self):
+    #     self.print("[DEBUG] Enter _onNoteSynchronousClicked function")
+    #     assert(self.focus_id)
+    #     article = act.getArticle(self.focus_id)
+    #     assert(article.local_path)
+    #     notes = opn.get_article_notes(article)
+    #     annots = extract_annotations(fmt.absolute_path(article.local_path))
 
-        if not annots:
-            self.print(fmt.RED_BOLD("No annotations found!"))
-            return
+    #     if not annots:
+    #         self.print(fmt.RED_BOLD("No annotations found!"))
+    #         return
 
-        notes_dict, annots_dict = {}, {}
-        for note in notes:
-            notes_dict.setdefault(note.page_number, []).append(note)
-        for annot in annots:
-            annots_dict.setdefault(annot[2], []).append(annot)
+    #     notes_dict, annots_dict = {}, {}
+    #     for note in notes:
+    #         notes_dict.setdefault(note.page_number, []).append(note)
+    #     for annot in annots:
+    #         annots_dict.setdefault(annot[2], []).append(annot)
             
-        n_page = max(list(notes_dict.keys()) + list(annots_dict.keys()))
+    #     n_page = max(list(notes_dict.keys()) + list(annots_dict.keys()))
 
-        del_notes = []
+    #     del_notes = []
         
-        for p in range(1, n_page + 1):
-            if not annots_dict.get(p, None):
-                del_notes.extend(notes_dict.get(p, []))
-            else:
-                if notes_dict.get(p, None):
-                    temp_notes = notes_dict[p]
-                    for note in temp_notes:
-                        refer_text = [annot[0] for annot in annots_dict[p]]
-                        if note.quote_content in refer_text:
-                            idx = refer_text.index(note.quote_content)
-                            act.resetNote({
-                                'note': annots_dict[p][idx][1],
-                                'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-                                'quote_content': note.quote_content,
-                                'page_number': p,
-                            }, note)
-                            annots_dict[p].pop(idx)
-                        else:
-                            del_notes.append(note)
-                for annot in annots_dict[p]:
-                    self.print("[DEBUG] Add note")
-                    act.addNote({
-                        'note': annot[1],
-                        'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-                        'quote_content': annot[0],
-                        'page_number': p,
-                    }, article)
-        for note in del_notes:
-            act.deleteNote(note.id)
+    #     for p in range(1, n_page + 1):
+    #         if not annots_dict.get(p, None):
+    #             del_notes.extend(notes_dict.get(p, []))
+    #         else:
+    #             if notes_dict.get(p, None):
+    #                 temp_notes = notes_dict[p]
+    #                 for note in temp_notes:
+    #                     refer_text = [annot[0] for annot in annots_dict[p]]
+    #                     if note.quote_content in refer_text:
+    #                         idx = refer_text.index(note.quote_content)
+    #                         act.resetNote({
+    #                             'note': annots_dict[p][idx][1],
+    #                             'date': datetime.datetime.now().strftime("%Y-%m-%d"),
+    #                             'quote_content': note.quote_content,
+    #                             'page_number': p,
+    #                         }, note)
+    #                         annots_dict[p].pop(idx)
+    #                     else:
+    #                         del_notes.append(note)
+    #             for annot in annots_dict[p]:
+    #                 self.print("[DEBUG] Add note")
+    #                 act.addNote({
+    #                     'note': annot[1],
+    #                     'date': datetime.datetime.now().strftime("%Y-%m-%d"),
+    #                     'quote_content': annot[0],
+    #                     'page_number': p,
+    #                 }, article)
+    #     for note in del_notes:
+    #         act.deleteNote(note.id)
 
     def onFolderArticleAddClicked(self, parent_widget, node_id): # on delete
         self.print("[DEBUG] Enter _onFolderArticleAddClicked function")
@@ -634,7 +634,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
         self.setFocusArticle(article.id)
         self.renderBrowser(content, "main")
         is_sync = not article.local_path is None
-        self.syncState(is_sync)
+        # self.syncState(is_sync)
 
     def showArticleModifer(self, article: Article | int, browser_name: str | List[str] = "info"):
         article = act.getArticle(article)
@@ -665,7 +665,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
 
     def clearArticleMain(self):
         self.clearBrowser("main")
-        self.syncState(False)
+        # self.syncState(False)
 
     def clearArticleModifer(self):
         self.clearBrowser("info")

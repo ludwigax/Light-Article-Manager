@@ -10,3 +10,4 @@ from .item_folder_ui import Ui_Form as Ui_FolderItem
 from .item_folderadd_ui import Ui_Form as Ui_FolderAddItem
 from .item_check_ui import Ui_Form as Ui_CheckItem
 from .mainwin_ui import Ui_MainWindow
+from .mainwin2_ui import Ui_MainWindow as Ui_MainWindow2

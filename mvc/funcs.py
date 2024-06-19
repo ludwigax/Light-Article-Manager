@@ -10,7 +10,7 @@ def on_sort_by_column(clf, col_idx, order):
     pass
 
 def on_row_selected(clf, article_id):
-    clf.tree_view.window().parent().render_signal.emit(article_id)
+    clf.tree_view.window().render_signal.emit(article_id)
 
 def on_row_delegate_clicked(index):
     pass

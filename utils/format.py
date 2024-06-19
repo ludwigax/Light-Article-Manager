@@ -18,6 +18,7 @@ CSS_THEMES = {
             background-color: #ffffff;
             color: #000000;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
         }
         h1 { color: #0a0a0a; }
         h2 { color: #0a0a0a; }
