@@ -1,6 +1,6 @@
-from PyQt5.QtCore import QSortFilterProxyModel, Qt
+from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QTreeView, QHeaderView, QMenu, QAction
+from PyQt5.QtWidgets import QMenu, QAction
 
 from mvc.model import (SearchProxyModel, BinestedItem,
     create_article_item, create_folder_item)
@@ -46,6 +46,11 @@ class ModelViewModule(BaseModule):
         col_idx, sort_order = self.sort_proxy_model(col_idx)
         # outside function
         funcs.on_sort_by_column(self, col_idx, sort_order)
+        # end
+
+    def _sort_by_search(self, text: str):
+        self.search_proxy_mdoel(text, 0)
+        # outside function
         # end
 
     def _row_selected(self, index):
@@ -169,6 +174,41 @@ class NestedModule(ModelViewModule):
             index = index.parent()
             level += 1
         return level
+    
+    def search_proxy_mdoel(self, text: str, col_idx: int = 0):
+        # override function
+        indices = {}
+        if self.proxy_model.external_indices:
+            self.proxy_model.resetOrder()
+
+        top_row_count = self.proxy_model.rowCount()
+
+        for top_row in range(top_row_count):
+            top_index = self.proxy_model.index(top_row, 0)
+            top_source_index = self.proxy_model.mapToSource(top_index)
+
+            key = -1
+            indices.setdefault(key, []).append(top_source_index.row())
+
+            child_row_count = self.proxy_model.rowCount(top_index)
+
+            for child_row in range(child_row_count):
+                child_index = self.proxy_model.index(child_row, col_idx, top_index)
+                child_source_index = self.proxy_model.mapToSource(child_index)
+
+                data = self.proxy_model.data(child_index, role=Qt.DisplayRole)
+                if data is None:
+                    continue
+                
+                data = data.lower()
+                if text.lower() not in data:
+                    continue
+
+                key = child_source_index.parent().row()
+                indices.setdefault(key, []).append(child_source_index.row())
+        self.proxy_model.setExternalOrder(indices)
+        print(indices)
+        return col_idx, self.proxy_model.sort_order
     
     def context_menu(self, point):
         index = self.tree_view.indexAt(point)

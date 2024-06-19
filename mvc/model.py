@@ -6,29 +6,36 @@ import ui.res_rc # TODO
 class SearchProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super(SearchProxyModel, self).__init__(parent)
-        self.external_indices = []
+        self.external_indices = {}
         self.sort_order = Qt.AscendingOrder
         self.sort_indicator_column = -1
 
-    def setExternalOrder(self, indices):
+    def setExternalOrder(self, indices: dict):
         self.external_indices = indices
         self.sort_indicator_column = -1
         self.invalidate()
         self.sort(0, Qt.AscendingOrder)
 
     def resetOrder(self):
-        self.external_indices = []
+        self.external_indices = {}
         self.invalidateFilter()
         self.sort(-1)
 
     def filterAcceptsRow(self, source_row, source_parent):
-        return not self.external_indices or source_row in self.external_indices
+        if not self.external_indices:
+            return True
+        if source_parent.isValid():
+            return source_row in self.external_indices.get(source_parent.row(), [])
+        else:
+            return source_row in self.external_indices[-1]
 
-    def lessThan(self, left, right):
+    def lessThan(self, left, right): # TOCHANGE
         if self.external_indices:
+            assert(left.parent().row() == right.parent().row())
             left_row = left.row()
             right_row = right.row()
-            return self.external_indices.index(left_row) < self.external_indices.index(right_row)
+            key = left.parent().row()
+            return self.external_indices.get(key, []).index(left_row) < self.external_indices.get(key, []).index(right_row)
         return super(SearchProxyModel, self).lessThan(left, right)
     
 class BinestedItem(QStandardItem):

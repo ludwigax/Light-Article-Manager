@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QSortFilterProxyModel, Qt
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QTreeView, QHeaderView
 
@@ -100,6 +100,33 @@ class BaseModule:
 
     def remove_item(self, index):
         self.model.removeRow(index.row())
+
+    def search_proxy_mdoel(self, text: str, col_idx: int = 0):
+        # type_list = []
+        indices = {}
+        if self.proxy_model.external_indices:
+            self.proxy_model.resetOrder()
+
+        row_count = self.proxy_model.rowCount()
+        for row in range(row_count):
+            proxy_index = self.proxy_model.index(row, col_idx)
+            
+            data = self.proxy_model.data(proxy_index, role=Qt.DisplayRole)
+            if data is None:
+                continue
+            # data_type = type(data) # TODO demo
+            data = data.lower()
+
+            if text.lower() not in data:
+                continue
+            source_index = self.proxy_model.mapToSource(proxy_index)
+            if source_index.parent() == QModelIndex():
+                key = -1
+            else:
+                key = source_index.parent().row()
+            indices.setdefault(key, []).append(source_index.row())
+        self.proxy_model.setExternalOrder(indices)
+        return col_idx, self.proxy_model.sort_order
 
     def sort_proxy_model(self, col_idx: int):
         if self.proxy_model.sort_indicator_column == col_idx:

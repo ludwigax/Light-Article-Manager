@@ -14,6 +14,8 @@ from widget.dialog import LArticleDialog, LKeywordDialog, LNoteDialog, LGroupDia
 from widget.widget import LSearchItem, LNoteItem, LAddItem, LArticleItem, LFolderItem, LCheckItem, \
     LFolderAddItem
 import widget.action as act
+from widget.search import SearchWidget
+
 from crawler import DownloadWorker
 
 from database import Article, Keyword, Note
@@ -81,6 +83,10 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.mvm = NonNestedModule(self, columns=None)
         self.nvm = NestedModule(self, columns=None)
 
+        search_widget = SearchWidget()
+        search_widget.search_signal.connect(self.mvm._sort_by_search)
+        search_widget.search_signal.connect(self.nvm._sort_by_search)
+
         for article in articles:
             self.mvm.add_item(article.id, to_profile(to_data(article)))
         
@@ -109,6 +115,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         tab_widget.addTab(tab2, "Folder View")
         
         layout = QVBoxLayout()
+        layout.addWidget(search_widget)
         layout.addWidget(tab_widget)
         self.widgetL.setLayout(layout)
         return
