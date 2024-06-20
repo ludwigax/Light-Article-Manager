@@ -1,29 +1,6 @@
 import fitz
 import pdfplumber
 from typing import List, Tuple
-import bibtexparser
-
-from archi import ArticleData
-
-import datetime
-
-def extract_bib_info(bib_file):
-    with open(bib_file, 'r', encoding="utf-8") as bibtex_file:
-        bib_database = bibtexparser.load(bibtex_file)
-
-    data_list: List[ArticleData] = []
-    for entry in bib_database.entries:
-        data = ArticleData(**entry)
-        if data.title is None:
-            continue
-        data_list.append(data)
-    for data in data_list:
-        for key in data._fields():
-            if isinstance(data[key], str):
-                data[key] = data[key].strip() if data[key] else ""
-                data[key] = data[key].replace("\n", " ")
-        data.add_time = datetime.datetime.now().strftime("%Y-%m-%d")
-    return data_list
 
 def extract_annotations(pdf_path: str) -> List[Tuple[str, str, int]]:    
     def extract_highlight(page, annot):

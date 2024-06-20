@@ -1,10 +1,7 @@
 import datetime
 from typing import List
 
-import bibtexparser
 from archi import ArticleData
-
-['title', 'author', 'journal', 'year', 'doi', 'local_path', 'add_time']
 
 class BIB_EXTRACTOR:
     keymap = {
@@ -137,9 +134,16 @@ class CIW_EXTRACTOR:
             data.add_time = datetime.datetime.now().strftime("%Y-%m-%d")
             data_list.append(data)
         return data_list
-
     
-if __name__ == "__main__":
-    file_name = 'C:/Users/Ludwig/Downloads/savedrecs (1).ris'
-    data = RIS_EXTRACTOR.extract(file_name)
-    print(data)
+
+class REF_PARSER:
+    supported_formats = ['.bib', '.ris', '.ciw']
+
+    def extract(file_path: str):
+        if file_path.endswith('.bib'):
+            return BIB_EXTRACTOR.extract(file_path)
+        if file_path.endswith('.ris'):
+            return RIS_EXTRACTOR.extract(file_path)
+        if file_path.endswith('.ciw'):
+            return CIW_EXTRACTOR.extract(file_path)
+        return None

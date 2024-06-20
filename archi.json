@@ -23,6 +23,12 @@
         ]
     },
     {
+        "name": "LLM Chemistry",
+        "data": [
+            45
+        ]
+    },
+    {
         "name": "ALGS",
         "data": [
             2,
@@ -50,6 +56,12 @@
             33,
             34,
             35
+        ]
+    },
+    {
+        "name": "MLC Application",
+        "data": [
+            44
         ]
     },
     {

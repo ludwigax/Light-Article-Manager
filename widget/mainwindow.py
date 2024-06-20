@@ -25,7 +25,8 @@ from utils.opn import to_data, to_profile
 
 from mvc.module import NestedModule, NonNestedModule
 
-from tools import extract_annotations, extract_bib_info
+from tools.pdf import extract_annotations
+import tools.ref as ref
 
 import markdown2
 import datetime
@@ -308,7 +309,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
         self.print("[DEBUG] Enter _onImportClicked function")
         if not (file_path := QFileDialog.getOpenFileName(self, 'Open file', '', fmt.BIB_FILTER)[0]):
             return
-        data = extract_bib_info(file_path)
+        data = ref.REF_PARSER.extract(file_path)
         if not data:
             self.print(fmt.RED_BOLD("No valid information extracted!"))
             return
@@ -321,7 +322,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow):
         if not (file_paths := QFileDialog.getOpenFileNames(self, 'Open folder', '', fmt.BIB_FILTER)[0]):
             return
         for file in file_paths:
-            extracted_info = extract_bib_info(file)
+            extracted_info = ref.REF_PARSER.extract(file)
             if not extracted_info:
                 self.print(fmt.RED_BOLD("No valid information extracted!"))
                 continue

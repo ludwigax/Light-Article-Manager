@@ -28,7 +28,7 @@ CSS_THEMES = {
         .title-style { font-weight: bold; font-size: 18px; color: #0a0a0a; }
         .author-style { font-size: 12px; color: grey; }
         .journal-style { font-weight: bold; font-size: 16px; color: green; }
-        .year-style { font-weight: bold; font-size: 16px; color: #0a0a0a; }
+        .year-style { font-weight: bold; font-size: 16px; color: green; }
         .doi-style { font-size: 12px; color: #2b6fff; }
         .path-style { font-size: 12px; color: #2b6fff; }
         .time-style { font-size: 12px; color: grey; }
@@ -57,7 +57,7 @@ CITE_TEXT = lambda x: f'<span style="font-size: 10pt; color: gray;">{x}</span>'
 URL_TEXT = lambda x: f'<span style="font-size: 10pt; color: blue; text-decoration: underline;">{x}</span>'
 
 PDF_FILTER = "pdf files (*.pdf)"
-BIB_FILTER = "bibtex files (*.bib)"
+BIB_FILTER = "bibtex files (*.bib);;endnote files (*.ciw);;ris files (*.ris);;"
 SEP = "\n\n---\n\n"
 
 def ANCHOR_TEXT(x, local_path):
@@ -136,8 +136,11 @@ def get_article_html(article: Article, article_only=False) -> str:
         if key == "local_path":
             raw_dict[key] = f"<span class='{FIELD_STYLES[key]}'>{anchor_path(ArticleData[key])}</span><br>\n"
             continue
+        if key == "year":
+            raw_dict[key] = f"<span class='{FIELD_STYLES[key]}'> - {ArticleData[key]}</span><br>\n"
+            continue
         raw_dict[key] = f"<span class='{FIELD_STYLES[key]}'>{ArticleData[key]}</span><br>\n"
-    raw += raw_dict['title'] + raw_dict['author'] + raw_dict['journal'].replace("<br>\n", " ") +\
+    raw += raw_dict['title'] + raw_dict['author'] + raw_dict['journal'].replace("<br>\n", "") +\
         raw_dict['year'] + raw_dict['doi'] + raw_dict['local_path'] + raw_dict['add_time']
 
     if not article_only:

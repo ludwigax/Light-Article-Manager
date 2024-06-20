@@ -31,7 +31,8 @@ from utils.opn import to_data, to_profile
 
 from mvc.module import NestedModule, NonNestedModule
 
-from tools import extract_annotations, extract_bib_info
+from tools.pdf import extract_annotations
+import tools.ref as ref
 
 import markdown2
 import datetime
@@ -172,7 +173,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
     def onImportClicked(self):
         if not (file_path := QFileDialog.getOpenFileName(self, 'Open file', '', fmt.BIB_FILTER)[0]):
             return
-        data = extract_bib_info(file_path)
+        data = ref.REF_PARSER.extract(file_path)
         if not data:
             return
         self.importArticle(data)
@@ -180,11 +181,11 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
     def onImportBatchClicked(self):
         if not (file_paths := QFileDialog.getOpenFileNames(self, 'Open folder', '', fmt.BIB_FILTER)[0]):
             return
-        for file in file_paths:
-            extracted_info = extract_bib_info(file)
-            if not extracted_info:
+        for file_path in file_paths:
+            data = ref.REF_PARSER.extract(file_path)
+            if not data:
                 continue
-            self.importArticle(extracted_info)
+            self.importArticle(data)
     
     def onManualClicked(self):
         dialog = LArticleDialog(self, 'Add manually')
