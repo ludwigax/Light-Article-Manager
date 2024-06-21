@@ -14,7 +14,7 @@ def on_row_selected(clf, article_id):
     clf.tree_view.window().render_signal.emit(article_id)
 
 def on_note_row_selected(clf, note_id):
-    clf.tree_view.window().parent().render_note_signal.emit(note_id)
+    clf.tree_view.window().render_note_signal.emit(note_id)
 
 def on_row_delegate_clicked(index):
     pass

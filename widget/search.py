@@ -7,8 +7,8 @@ import ui.res_rc
 class SearchWidget(QWidget):
     search_signal = pyqtSignal(str)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.initUI()
         self.timer = QTimer()

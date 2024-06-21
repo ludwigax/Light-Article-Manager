@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog,\
     QMessageBox, QDialog, QTextBrowser, QListWidget, QTextEdit, QTreeWidgetItem, QInputDialog,\
-    QToolBar, QAction
+    QToolBar, QAction, QDockWidget
 from PyQt5.QtCore import Qt, pyqtSignal
 
 from PyQt5.QtWidgets import QTabWidget, QVBoxLayout
@@ -15,6 +15,7 @@ from widget.widget import LSearchItem, LNoteItem, LAddItem, LArticleItem, LFolde
     LFolderAddItem
 import widget.action as act
 from widget.search import SearchWidget
+from widget.zone import ModuleViewZone, MainBrowserZone, NoteViewZone, NoteBrowserZone 
 
 from crawler import DownloadWorker
 
@@ -52,17 +53,41 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.download_id = None
         # self.log = [] # TODO
 
+        self.mvm = NonNestedModule(self, columns=None)
+        self.nvm = NestedModule(self, columns=None)
+        self.notem = NoteModule(self)
+        self.browser_m = QTextBrowser(self)
+        self.browser_nt_1 = QTextBrowser(self)
+        self.browser_nt_2 = QTextBrowser(self)
+
         self._setupMenuAction()
-        self._setupLeftWidget()
-        self._setupRightWidget()
         self._setupSlots()
         self._setupBrowserAnchor()
 
-        # temp functions
-        self.win_1 = None
-        self.win_2 = None
-        self._setupDockNoteList_temp()
-        self._setupDockNoteBrowser_temp()
+        # define the dock view
+        self.widget_1 = ModuleViewZone(self, self)
+        self.widget_2 = MainBrowserZone(self, self)
+        self.widget_3 = NoteViewZone(self, self)
+        self.widget_4 = NoteBrowserZone(self, self)
+
+        # init the necessary data
+        self.widget_1.init_data()
+
+        dock1 = QDockWidget("Module View", self)
+        dock1.setWidget(self.widget_1)
+        self.addDockWidget(Qt.TopDockWidgetArea, dock1)
+
+        dock2 = QDockWidget("Main Browser", self)
+        dock2.setWidget(self.widget_2)
+        self.addDockWidget(Qt.TopDockWidgetArea, dock2)
+
+        dock3 = QDockWidget("Note View", self)
+        dock3.setWidget(self.widget_3)
+        self.addDockWidget(Qt.BottomDockWidgetArea, dock3)
+
+        dock4 = QDockWidget("Note Browser", self)
+        dock4.setWidget(self.widget_4)
+        self.addDockWidget(Qt.BottomDockWidgetArea, dock4)
 
     def _setupMenuAction(self):
         self.actionImport_article.triggered.connect(self.onImportClicked)
@@ -75,7 +100,6 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
 
     def _setupSlots(self):
         self.render_signal.connect(self.showArticleMain)
-
         # temp
         self.render_note_signal.connect(self.showNote_temp)
 
@@ -83,133 +107,10 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         def anchor_fcn(path):
             if act.openAritcleFile(path):
                 self.showArticleMain(self.focus_id)
-        self.browser.anchorClicked.connect(anchor_fcn)
-
-    def _setupLeftWidget(self):
-        tab_widget = QTabWidget()
-        tab1 = QWidget()
-        tab2 = QWidget()
-        
-        articles = opn.get_all_articles()
-
-        self.mvm = NonNestedModule(self, columns=None)
-        self.nvm = NestedModule(self, columns=None)
-
-        search_widget = SearchWidget()
-        search_widget.search_signal.connect(self.mvm._sort_by_search)
-        search_widget.search_signal.connect(self.nvm._sort_by_search)
-
-        for article in articles:
-            self.mvm.add_item(article.id, to_profile(to_data(article)))
-        
-        archi = Archi()
-        archi.load()
-        for kv in archi.data:
-            item = self.nvm.add_item(-1, True, ProfileData(kv['name'], '', '', '', '', ''))
-            for idx in kv['data']:
-                article = opn.get_article(idx)
-                self.nvm.add_item(idx, False, to_profile(to_data(article)), item)
-
-        tab1_layout = QVBoxLayout()
-        tab1_layout.setContentsMargins(0, 0, 0, 0)
-        tab1_layout.setSpacing(3)
-        tab1_layout.addWidget(self.mvm.tree_view)
-
-        tab1.setLayout(tab1_layout)
-        
-        tab2_layout = QVBoxLayout()
-        tab2_layout.setContentsMargins(0, 0, 0, 0)
-        tab2_layout.setSpacing(3)
-        tab2_layout.addWidget(self.nvm.tree_view)
-        tab2.setLayout(tab2_layout)
-        
-        tab_widget.addTab(tab1, "Flat View")
-        tab_widget.addTab(tab2, "Folder View")
-        
-        layout = QVBoxLayout()
-        layout.addWidget(search_widget)
-        layout.addWidget(tab_widget)
-        self.widgetL.setLayout(layout)
-        return
-    
-    def _setupRightWidget(self):
-        browse_widget = QWidget()
-
-        toolbar = QToolBar("Toolbar", browse_widget)
-        actionAddnote = QAction("Add note", browse_widget)
-        actionAddnote.triggered.connect(self.temp_add_note)
-        toolbar.addAction(actionAddnote)
-
-        self.browser = QTextBrowser(self)
-        
-        browse_layout = QVBoxLayout()
-        browse_layout.setContentsMargins(0, 0, 0, 0)
-        browse_layout.setSpacing(3)
-        browse_layout.addWidget(toolbar)
-        browse_layout.addWidget(self.browser)
-        browse_widget.setLayout(browse_layout)
-
-        layout = QVBoxLayout()
-        layout.addWidget(browse_widget)
-        self.widgetR.setLayout(layout)
-        return
-    
-    def _setupDockNoteList_temp(self):
-        self.win_1 = QDialog(self)
-        self.notem = NoteModule(self)
-        layout = QVBoxLayout()
-
-        layout.addWidget(self.notem.tree_view)
-
-        self.win_1.setWindowTitle("Note List")
-        self.win_1.setLayout(layout)
-        self.win_1.setModal(False)
-        self.win_1.show()
-
-    def _setupDockNoteBrowser_temp(self):
-        self.win_2 = QDialog(self)
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(1)
-        
-        browser1 = QTextBrowser(self.win_2)
-        browser2 = QTextBrowser(self.win_2)
-
-        layout.addWidget(browser1, stretch=2)
-        layout.addWidget(browser2, stretch=8)
-
-        self.win_2.setWindowTitle("Note Browser")
-        self.win_2.setLayout(layout)
-        self.win_2.setModal(False)
-        self.win_2.show()
-
-        def on_win_2_close(event):
-            self.win_2 = None
-            event.accept()
-
-        self.win_2.closeEvent = on_win_2_close
-        
-    
-    def temp_add_note(self):
-        if not self.focus_id:
-            # self.print(fmt.RED_BOLD("No valid article selected"))
-            return
-        diag = LNoteDialog(self, 'Add New Note')
-        if diag.exec_() == QDialog.Rejected:
-            return
-        data = diag.get_data()
-        note = opn.create_note(data)
-        opn.add_note(note, opn.get_article(self.focus_id))
-
-        self.showArticleMain(self.focus_id)
+        self.browser_m.anchorClicked.connect(anchor_fcn)   
 
     def showNote_temp(self, note_id):
-        note = opn.get_note(note_id)
-        content = fmt.get_notes_html([note])
-        content = fmt.wrap_html(content, fmt.CSS_THEMES["microsoft_white"])
-        if self.win_2 is None:
-            self._setupDockNoteBrowser_temp()
-        self.win_2.findChildren(QTextBrowser)[1].setHtml(content)
+        self.widget_4.init_data(note_id)
 
     # --------------------------------------------------------------------------------
     # mainwindow GUI functions
@@ -266,15 +167,9 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
 
     def showArticleMain(self, article: Article | int):
         print(f"clicked {article}")
-        article = act.getArticle(article)
-        content = fmt.get_article_html(article)
-        content = fmt.wrap_html(content, fmt.CSS_THEMES["microsoft_white"])
+        if isinstance(article, int):
+            article = opn.get_article(article)
+        self.widget_2.init_data(article.id)
+        self.widget_3.clear_data()
+        self.widget_3.init_data(article.id)
         self.setFocusArticle(article.id)
-        self.renderBrowser(content)
-
-        # temp functions
-        self.notem.focus_id = article.id
-        self.notem.model.removeRows(0, self.notem.model.rowCount())
-        notes = opn.get_article_notes(article)
-        for note in notes:
-            self.notem.add_item(note.id, to_profile(to_data(note)))
