@@ -1,145 +1,61 @@
-import datetime
-from typing import List
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QDockWidget, QVBoxLayout, QWidget, QSplitter
+from PyQt5.QtWidgets import QTextBrowser
+from PyQt5.QtCore import Qt
 
-import bibtexparser
-from archi import ArticleData
+from mvc.notem import NoteModule
+from archi import ProfileNote
 
-['title', 'author', 'journal', 'year', 'doi', 'local_path', 'add_time']
+class CodeEditorExample(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-class BIB_EXTRACTOR:
-    keymap = {
-        'Title': 'title',
-        'Author': 'author',
-        'Journal': 'journal',
-        'Year': 'year',
-        'DOI': 'doi',
-    }
+        self.initUI()
 
-    def parse(raw_text: str):
-        entry = {}
-        lines = raw_text.split('\n')
-        key = None
-        for line in lines:
-            if '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip()
-                value = value.strip().strip('{},"')
-                entry[key] = value
-            elif key is not None:
-                value = line.strip().strip('{},"')
-                entry[key] += " " + value
-        return entry
-    
-    def extract(bib_file: str):
-        with open(bib_file, 'r', encoding="utf-8") as file:
-            content = file.read()
+    def initUI(self):
+        self.setWindowTitle("Code Editor Example")
+        self.setGeometry(100, 100, 800, 600)
 
-        entries_text = content.split('@')[1:]
-        data_list: List[ArticleData] = []
-        for entry_text in entries_text:
-            entry = BIB_EXTRACTOR.parse(entry_text)
-            if entry.get('Title') is None:
-                continue
-            article_entry = {}
-            for key in entry.keys():
-                if key in BIB_EXTRACTOR.keymap:
-                    article_entry[BIB_EXTRACTOR.keymap[key]] = entry[key]
-            data = ArticleData(**article_entry)
-            data.add_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            data_list.append(data)
-        return data_list
+        # 中央窗口区域
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
-class RIS_EXTRACTOR:
-    keymap = {
-        'TI': 'title',
-        'AU': 'author',
-        'T2': 'journal',
-        'PY': 'year',
-        'DO': 'doi',
-    }
+        # 使用 QSplitter 创建可调整大小的面板
+        splitter = QSplitter()
 
-    def parse(raw_text: str):
-        entry = {}
-        lines = raw_text.strip().split('\n')
-        for line in lines:
-            if line.strip() == 'ER  -':
-                break
-            key, value = line[:2], line[6:].strip()
-            if key == 'AU':
-                if 'AU' in entry:
-                    entry['AU'] += ' and ' + value
-                else:
-                    entry['AU'] = value
-            else:
-                entry[key] = value
-        return entry
+        # 左侧面板
+        left_panel = QTextEdit()
+        left_panel.setPlaceholderText("Explorer")
+        splitter.addWidget(left_panel)
 
-    def extract(ris_file: str):
-        with open(ris_file, 'r', encoding="utf-8") as file:
-            content = file.read()
+        # 中间面板
+        center_panel = QTextEdit()
+        center_panel.setPlaceholderText("Editor")
+        splitter.addWidget(center_panel)
 
-        entries_text = content.strip().split('\n\n')
-        data_list: List[ArticleData] = []
-        for entry_text in entries_text:
-            entry = RIS_EXTRACTOR.parse(entry_text)
-            if entry.get('TI') is None:
-                continue
-            article_entry = {}
-            for key in entry.keys():
-                if key in RIS_EXTRACTOR.keymap:
-                    article_entry[RIS_EXTRACTOR.keymap[key]] = entry[key]
-            data = ArticleData(**article_entry)
-            data.add_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            data_list.append(data)
-        return data_list
-    
-class CIW_EXTRACTOR:
-    keymap = {
-        'TI': 'title',
-        'AF': 'author',
-        'SO': 'journal',
-        'PY': 'year',
-        'DI': 'doi',
-    }
+        # 右侧面板
+        right_panel = QTextEdit()
+        right_panel.setPlaceholderText("Properties")
+        splitter.addWidget(right_panel)
 
-    def parse(raw_text: str):
-        entry = {}
-        lines = raw_text.strip().split('\n')
-        key = None
-        for line in lines:
-            if line.startswith('ER'):
-                break
-            if line[:2] == "  " and key is not None:
-                entry[key] += ' ' + line.strip()
-                continue
-            key, value = line[:2], line[3:].strip()
-            if (key == 'AU' or key == 'AF') and key in entry:
-                entry[key] += ' and ' + value
-            else:
-                entry[key] = value
-        return entry
-    
-    def extract(ciw_file: str):
-        with open(ciw_file, 'r', encoding="utf-8") as file:
-            content = file.read()
+        layout = QVBoxLayout()
+        layout.addWidget(splitter)
+        central_widget.setLayout(layout)
 
-        entries_text = content.strip().split('\n\n')
-        data_list: List[ArticleData] = []
-        for entry_text in entries_text:
-            entry = CIW_EXTRACTOR.parse(entry_text)
-            if entry.get('TI') is None:
-                continue
-            article_entry = {}
-            for key in entry.keys():
-                if key in CIW_EXTRACTOR.keymap:
-                    article_entry[CIW_EXTRACTOR.keymap[key]] = entry[key]
-            data = ArticleData(**article_entry)
-            data.add_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            data_list.append(data)
-        return data_list
+        # 创建一个底部停靠窗口
+        bottom_dock = QDockWidget("Console", self)
+        bottom_dock.setWidget(QTextEdit())
+        self.addDockWidget(Qt.BottomDockWidgetArea, bottom_dock)
 
-    
-if __name__ == "__main__":
-    file_name = 'C:/Users/Ludwig/Downloads/savedrecs (1).ris'
-    data = RIS_EXTRACTOR.extract(file_name)
-    print(data)
+        # 创建一个左侧停靠窗口
+        left_dock = QDockWidget("Project Explorer", self)
+        left_dock.setWidget(QTextEdit())
+        self.addDockWidget(Qt.LeftDockWidgetArea, left_dock)
+
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = CodeEditorExample()
+    ex.show()
+    sys.exit(app.exec_())

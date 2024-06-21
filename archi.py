@@ -47,6 +47,10 @@ ProfileData = namedtuple(
     'ProfileData', ['title', 'year', 'journal', 'author', 'add_time', 'rank']
     )
 
+ProfileNote = namedtuple(
+    'ProfileNote', ['title', 'note', 'date', 'torder']
+    )
+
 class NamedDict(UserDict):
     def __init__(self, **kwargs):
         filtered_kwargs = {k: v for k, v in kwargs.items() if k in self._fields()}
@@ -84,10 +88,10 @@ class ArticleData(NamedDict):
     
 class NoteData(NamedDict):
     def _fields(self):
-        return ['note', 'date', 'related_content']
+        return ['title', 'note', 'date', 'related_content', 'torder']
     
 class AnnotationData(NamedDict):
     def _fields(self):
-        return ['annot', 'date', 'page_number', 'quote_content']
+        return ['annot', 'date', 'page_number', 'quote_content', 'colour', 'torder']
 
                          

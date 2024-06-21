@@ -1,7 +1,8 @@
 import utils.opn as opn
 
 from PyQt5.QtWidgets import QDialog, QMessageBox, QInputDialog, QLineEdit
-from widget.dialog import LArticleDialog, LGroupDialog, CheckStateDialog
+from widget.dialog import LArticleDialog, LGroupDialog, CheckStateDialog, \
+    LNoteDialog
 
 from utils.opn import to_data, to_profile
 from archi import Archi
@@ -11,6 +12,9 @@ def on_sort_by_column(clf, col_idx, order):
 
 def on_row_selected(clf, article_id):
     clf.tree_view.window().render_signal.emit(article_id)
+
+def on_note_row_selected(clf, note_id):
+    clf.tree_view.window().parent().render_note_signal.emit(note_id)
 
 def on_row_delegate_clicked(index):
     pass
@@ -103,3 +107,31 @@ def on_delete_folder_archi(clf, title, idx1):
     archi.load()
     opn.delete_folder(archi, title, idx1)
     archi.save()
+
+def on_new_note(clf, article_id):
+    dialog = LNoteDialog(clf.parent(), 'Add New Note')
+    if dialog.exec_() == QDialog.Rejected:
+        return -1, None, False
+    data = dialog.get_data()
+    note = opn.create_note(data)
+    opn.add_note(note, opn.get_article(article_id))
+    return note.id, data, True
+
+def on_modify_note(clf, note_id, article_id):
+    note = opn.get_note(note_id)
+    note_data = opn.to_data(note)
+    dialog = LNoteDialog(clf.parent(), 'Modify Note')
+    dialog.set_data(note_data)
+    if dialog.exec_() == QDialog.Rejected:
+        return -1, None, False
+    data = dialog.get_data()
+    opn.reset_note(data, note)
+    return note.id, data, True
+
+def on_delete_note(clf, note_id, article_id = None):
+    if QMessageBox.question(clf.parent(), 'Delete', 'Ensure the deletion',
+                            QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+        opn.delete_note(note_id)
+        return True
+    else:
+        return False

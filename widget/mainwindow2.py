@@ -30,6 +30,7 @@ import utils.opn as opn
 from utils.opn import to_data, to_profile
 
 from mvc.module import NestedModule, NonNestedModule
+from mvc.notem import NoteModule
 
 from tools.pdf import extract_annotations
 import tools.ref as ref
@@ -41,6 +42,7 @@ from func import global_session
 
 class LMainWindow(QMainWindow, Ui_MainWindow2):
     render_signal = pyqtSignal(int)
+    render_note_signal = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -56,6 +58,12 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self._setupSlots()
         self._setupBrowserAnchor()
 
+        # temp functions
+        self.win_1 = None
+        self.win_2 = None
+        self._setupDockNoteList_temp()
+        self._setupDockNoteBrowser_temp()
+
     def _setupMenuAction(self):
         self.actionImport_article.triggered.connect(self.onImportClicked)
         self.actionImport_batch.triggered.connect(self.onImportBatchClicked)
@@ -67,6 +75,9 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
 
     def _setupSlots(self):
         self.render_signal.connect(self.showArticleMain)
+
+        # temp
+        self.render_note_signal.connect(self.showNote_temp)
 
     def _setupBrowserAnchor(self):
         def anchor_fcn(path):
@@ -143,18 +154,62 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.widgetR.setLayout(layout)
         return
     
+    def _setupDockNoteList_temp(self):
+        self.win_1 = QDialog(self)
+        self.notem = NoteModule(self)
+        layout = QVBoxLayout()
+
+        layout.addWidget(self.notem.tree_view)
+
+        self.win_1.setWindowTitle("Note List")
+        self.win_1.setLayout(layout)
+        self.win_1.setModal(False)
+        self.win_1.show()
+
+    def _setupDockNoteBrowser_temp(self):
+        self.win_2 = QDialog(self)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(1)
+        
+        browser1 = QTextBrowser(self.win_2)
+        browser2 = QTextBrowser(self.win_2)
+
+        layout.addWidget(browser1, stretch=2)
+        layout.addWidget(browser2, stretch=8)
+
+        self.win_2.setWindowTitle("Note Browser")
+        self.win_2.setLayout(layout)
+        self.win_2.setModal(False)
+        self.win_2.show()
+
+        def on_win_2_close(event):
+            self.win_2 = None
+            event.accept()
+
+        self.win_2.closeEvent = on_win_2_close
+        
+    
     def temp_add_note(self):
         if not self.focus_id:
             # self.print(fmt.RED_BOLD("No valid article selected"))
             return
-        text, ok = QInputDialog.getText(self, 'Add Notes', "Enter: ")
-        if ok:
-            note = NoteData(
-                note=text,
-                date=datetime.datetime.now().strftime("%Y-%m-%d")
-            )
-            note = opn.create_note(note)
-            opn.add_note(note, opn.get_article(self.focus_id))
+        diag = LNoteDialog(self, 'Add New Note')
+        if diag.exec_() == QDialog.Rejected:
+            return
+        data = diag.get_data()
+        note = opn.create_note(data)
+        opn.add_note(note, opn.get_article(self.focus_id))
+
+        self.showArticleMain(self.focus_id)
+
+    def showNote_temp(self, note_id):
+        note = opn.get_note(note_id)
+        content = fmt.get_notes_html([note])
+        content = fmt.wrap_html(content, fmt.CSS_THEMES["microsoft_white"])
+        if self.win_2 is None:
+            self._setupDockNoteBrowser_temp()
+        self.win_2.findChildren(QTextBrowser)[1].setHtml(content)
 
     # --------------------------------------------------------------------------------
     # mainwindow GUI functions
@@ -216,3 +271,10 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         content = fmt.wrap_html(content, fmt.CSS_THEMES["microsoft_white"])
         self.setFocusArticle(article.id)
         self.renderBrowser(content)
+
+        # temp functions
+        self.notem.focus_id = article.id
+        self.notem.model.removeRows(0, self.notem.model.rowCount())
+        notes = opn.get_article_notes(article)
+        for note in notes:
+            self.notem.add_item(note.id, to_profile(to_data(note)))

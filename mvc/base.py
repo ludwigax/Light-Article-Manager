@@ -8,13 +8,13 @@ from mvc.model import COLUMNS_WIDTH
 from archi import ProfileData
 
 class BaseModule:
-    def __init__(self, parent, columns=None):
+    def __init__(self, parent, columns=None, refer_columns=COLUMNS_WIDTH):
         self._parent = parent
 
         if columns is None:
-            self.columns = list(COLUMNS_WIDTH.keys())
+            self.columns = list(refer_columns.keys())
         else:
-            self.columns = [col for col in columns if col in COLUMNS_WIDTH.keys()]
+            self.columns = [col for col in columns if col in refer_columns.keys()]
 
         self.model = QStandardItemModel(parent)
         self.model.setHorizontalHeaderLabels(self.columns)
@@ -26,7 +26,7 @@ class BaseModule:
         self.tree_view.setModel(self.proxy_model)
 
         for i, col in enumerate(self.columns):
-            self.tree_view.setColumnWidth(i, COLUMNS_WIDTH[col])
+            self.tree_view.setColumnWidth(i, refer_columns[col])
 
         self.tree_view.setEditTriggers(QTreeView.NoEditTriggers)
         self.tree_view.setSelectionMode(QTreeView.ExtendedSelection)
@@ -91,7 +91,8 @@ class BaseModule:
             rank_item.setData(data.rank, Qt.DisplayRole)
             row.append(rank_item)
         if "" in self.columns:
-            button_item = QStandardItem(QIcon('../ui/src/plus.png'), "")
+            # QIcon(':icons/plus.png') # TODO
+            button_item = QStandardItem(QIcon(), "")
             row.append(button_item)
         
         for item in row:

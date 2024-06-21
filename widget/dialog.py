@@ -97,39 +97,43 @@ class LNoteDialog(QDialog, Ui_NoteDialog):
 
         self.btn_add.clicked.connect(self.AddCite)
         self.btn_rm.clicked.connect(self.RemoveCite)
+        self.textedit_title.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
         self.textedit_note.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_quote.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
+        self.textedit_date.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
         self.related_content = []
 
-    def get_data(self): # TODO
+        self.textedit_date.setPlainText(datetime.datetime.now().strftime("%Y-%m-%d"))
+
+    def get_data(self):
         data = {
+            'title': self.textedit_title.toPlainText(),
             'note': self.textedit_note.toPlainText(),
-            'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-            'related_content': self.textedit_quote.toPlainText(),
+            'date': self.textedit_date.toPlainText(),
+            'related_content': [],
         }
         for k, v in data.items():
             if isinstance(v, str):
                 data[k] = v.strip() if v.strip() else None
-        data['related_content'] = []
+        data['related_content'] = self.related_content
         return NoteData(**data)
     
     def set_data(self, note: Note):
+        self.textedit_title.setPlainText(note.title)
         self.textedit_note.setPlainText(note.note)
-        self.textedit_quote.setPlainText(str(note.related_content))
+        self.textedit_date.setPlainText(note.date)
+        for content in note.related_content:
+            self.related_content.append(content)
+            self.list_content.addItem(content)
     
     def AddCite(self):
-        if doi := QInputDialog.getText(self, 'Add related cite', 'doi')[0]:
-            info = {"doi": doi, "local_path": None, "article_id": None}
-            if article := utils.opn.search_doi_article(doi):
-                info['article_id'] = article.id
-                info['local_path'] = article.local_path
-            self.related_content.append(info)
-            self.list_cite.addItem(doi)
+        if content := QInputDialog.getText(self, 'Add related content', 'content')[0]:
+            self.related_content.append(content)
+            self.list_content.addItem(content)
         
     def RemoveCite(self):
-        if item := self.list_cite.currentItem():
-            self.related_content.pop(self.list_cite.row(item))
-            self.list_cite.takeItem(self.list_cite.row(item))
+        if item := self.list_content.currentItem():
+            self.related_content.pop(self.list_content.row(item))
+            self.list_content.takeItem(self.list_content.row(item))
 
 class LGroupDialog(QDialog, Ui_GroupDialog):
     def __init__(self, parent=None, widget_title=None):

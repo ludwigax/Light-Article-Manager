@@ -1,11 +1,12 @@
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 from sqlalchemy.orm.session import Session
 from sqlalchemy import asc, inspect
 
 from database import Article, Keyword, Note, Annotation
-from archi import ArticleData, NoteData, AnnotationData, Archi, ProfileData
+from archi import ArticleData, NoteData, AnnotationData, Archi
+from archi import ProfileData, ProfileNote
 
 from func import global_session
 
@@ -49,16 +50,26 @@ def to_data(table_item) -> ArticleData | NoteData | AnnotationData:
     elif table_item.__class__.__name__ == 'Annotation':
         return AnnotationData(**kvpair)
     
-def to_profile(data: ArticleData) -> ProfileData:
-    data = data.to_space()
-    return ProfileData(
-        title=data.title,
-        year=data.year,
-        journal=data.journal,
-        author=data.author,
-        add_time=data.add_time,
-        rank=0
-    )
+def to_profile(data: Union[ArticleData, NoteData])\
+    -> Union[ProfileData, ProfileNote]:
+    if isinstance(data, ArticleData):
+        data = data.to_space()
+        return ProfileData(
+            title=data.title,
+            year=data.year,
+            journal=data.journal,
+            author=data.author,
+            add_time=data.add_time,
+            rank=0
+        )
+    elif isinstance(data, NoteData):
+        data = data.to_space()
+        return ProfileNote(
+            title=data.title,
+            note=data.note,
+            date=data.date,
+            torder=data.torder
+        )
 
 # --------------------------------------------------------------------------------
 # SQL operations
@@ -105,7 +116,7 @@ def get_note_article(note: int | Note) -> Article:
 
 def get_article_notes(article: Article) -> List[Note]:
     session = global_session()
-    notes = session.query(Note).join(Article).filter(Article.id == article.id).order_by(asc(Note.page_number)).all()
+    notes = session.query(Note).join(Article).filter(Article.id == article.id).order_by(asc(Note.torder)).all()
     return notes
 
 def get_note(note_id: int) -> Note:
@@ -155,8 +166,11 @@ def reset_keywords(keywords: List[Keyword], article: Article):
 
 def reset_note(data: NoteData, note: Note):
     session = global_session()
+    note.title = data.title
     note.note = data.note
+    note.date = data.date
     note.related_content = data.related_content
+    note.torder = data.torder
     session.commit()
 
 def remove_keywords(keywords: List[Keyword], article: Article):

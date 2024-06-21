@@ -55,122 +55,13 @@ QScrollBar:vertical {
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>484</width>
-      <height>214</height>
+      <width>501</width>
+      <height>211</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_5">
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
-         </property>
-         <property name="topMargin">
-          <number>5</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lb_title">
-           <property name="minimumSize">
-            <size>
-             <width>60</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>60</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>10</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
-           </property>
-           <property name="text">
-            <string>Title</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Preferred</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPlainTextEdit" name="textedit_title">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPlainTextEdit {
-    border: 1px solid#e6e6e6;
-    background-color: white;
-}</string>
-         </property>
-         <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
-         </property>
-         <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
-         </property>
-         <property name="plainText">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
@@ -216,7 +107,7 @@ QScrollBar:vertical {
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_2">
+          <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -279,7 +170,7 @@ QScrollBar:vertical {
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <property name="spacing">
@@ -292,7 +183,7 @@ QScrollBar:vertical {
           <number>5</number>
          </property>
          <item>
-          <widget class="QLabel" name="lb_date">
+          <widget class="QLabel" name="label_5">
            <property name="minimumSize">
             <size>
              <width>60</width>
@@ -317,7 +208,7 @@ QScrollBar:vertical {
             <enum>Qt::LeftToRight</enum>
            </property>
            <property name="text">
-            <string>Date</string>
+            <string>Quote</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -325,7 +216,7 @@ QScrollBar:vertical {
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_3">
+          <spacer name="verticalSpacer_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -343,7 +234,7 @@ QScrollBar:vertical {
         </layout>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="textedit_date">
+        <widget class="QPlainTextEdit" name="textedit_quote">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -388,7 +279,7 @@ QScrollBar:vertical {
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <property name="spacing">
@@ -401,7 +292,7 @@ QScrollBar:vertical {
           <number>5</number>
          </property>
          <item>
-          <widget class="QLabel" name="lb_content">
+          <widget class="QLabel" name="lb_cite">
            <property name="minimumSize">
             <size>
              <width>60</width>
@@ -426,7 +317,7 @@ QScrollBar:vertical {
             <enum>Qt::LeftToRight</enum>
            </property>
            <property name="text">
-            <string>Content</string>
+            <string>Cite</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -434,7 +325,7 @@ QScrollBar:vertical {
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_4">
+          <spacer name="verticalSpacer_3">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -452,7 +343,7 @@ QScrollBar:vertical {
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QPushButton" name="btn_add">
            <property name="minimumSize">
@@ -500,7 +391,7 @@ QScrollBar:vertical {
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_5">
+          <spacer name="verticalSpacer_4">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -518,7 +409,7 @@ QScrollBar:vertical {
         </layout>
        </item>
        <item>
-        <widget class="QListWidget" name="list_content">
+        <widget class="QListWidget" name="list_cite">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>

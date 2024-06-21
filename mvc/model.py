@@ -37,12 +37,33 @@ class SearchProxyModel(QSortFilterProxyModel):
             key = left.parent().row()
             return self.external_indices.get(key, []).index(left_row) < self.external_indices.get(key, []).index(right_row)
         return super(SearchProxyModel, self).lessThan(left, right)
-    
-class BinestedItem(QStandardItem):
-    def __init__(self, is_folder, article_id, *args, **kwargs):
+
+class PropItem(QStandardItem):
+    def __init__(self, keys = [], values = [], *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.is_folder = is_folder
-        self.article_id = article_id
+        self._prop_dict = dict(zip(keys, values))
+
+    def __getattr__(self, key):
+        if key == '_prop_dict':
+            return getattr(self, '_prop_dict')
+        if key in self.__dict__.get('_prop_dict', {}):
+            return self._prop_dict[key]
+        else:
+            raise AttributeError(f"'PropItem' object has no attribute '{key}'")
+        
+    def __setattr__(self, key, value):
+        if key == '_prop_dict':
+            super().__setattr__(key, value)
+        elif key in self.__dict__.get('_prop_dict', {}):
+            self._prop_dict[key] = value
+        else:
+            super().__setattr__(key, value)
+
+class BinestedItem(PropItem): # TODO this changed
+    def __init__(self, is_folder, article_id, *args, **kwargs):
+        keys = ['is_folder', 'article_id']
+        values = [is_folder, article_id]
+        super().__init__(keys, values, *args, **kwargs)
 
 def create_folder_item(text) -> BinestedItem:
     icon = QIcon(":icons/open-folder.png")
@@ -54,6 +75,11 @@ def create_article_item(article_id, text) -> BinestedItem:
     item = BinestedItem(False, article_id, icon, text)
     return item
 
+def create_note_item(note_id, text) -> PropItem:
+    icon = QIcon(":icons/note.png")
+    item = PropItem(['note_id'], [note_id], icon, text)
+    return item
+
 COLUMNS_WIDTH = {
     'Title': 300,
     'Year': 40,
@@ -61,5 +87,12 @@ COLUMNS_WIDTH = {
     'Author': 90,
     'Add Time': 90,
     'Rank': 50,
+    '': 24
+}
+
+NOTE_COLUMNS_WIDTH = {
+    'Title': 240,
+    'Date': 80,
+    'Article': 240,
     '': 24
 }

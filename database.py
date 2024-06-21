@@ -46,9 +46,11 @@ class Note(Base):
     __tablename__ = 'notes'
 
     id = Column(Integer, primary_key=True)
+    title = Column(String)
     note = Column(String)
     date = Column(String)
     related_content = Column(JSON, default=[])
+    torder = Column(Integer)
     article_id = Column(Integer, ForeignKey('articles.id'))
     article = relationship("Article", back_populates="notes")
 
@@ -60,6 +62,8 @@ class Annotation(Base):
     date = Column(String)
     page_number = Column(Integer)
     quote_content = Column(String)
+    colour = Column(String)
+    torder = Column(Integer) # needed?
     article_id = Column(Integer, ForeignKey('articles.id'))
     article = relationship("Article", back_populates="annotations")
 
