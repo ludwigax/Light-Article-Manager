@@ -121,6 +121,7 @@
      <addaction name="actionMicrosoft_Modern"/>
     </widget>
     <addaction name="menuTheme"/>
+    <addaction name="actionSave_layout"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -168,6 +169,11 @@
   <action name="actionMicrosoft_Modern">
    <property name="text">
     <string>Microsoft Modern</string>
+   </property>
+  </action>
+  <action name="actionSave_layout">
+   <property name="text">
+    <string>Save layout</string>
    </property>
   </action>
  </widget>

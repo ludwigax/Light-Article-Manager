@@ -5,10 +5,10 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy import asc, inspect
 
 from database import Article, Keyword, Note, Annotation
-from archi import ArticleData, NoteData, AnnotationData, Archi
-from archi import ProfileData, ProfileNote
+from sylva import ArticleData, NoteData, AnnotationData, Sylva
 
 from func import global_session
+import datetime
 
 def create_article(article_data: ArticleData, keywords: List[str] = []) -> Article: # TODO keywords error may cause ?
     article = Article(**article_data.to_dict())
@@ -50,26 +50,6 @@ def to_data(table_item) -> ArticleData | NoteData | AnnotationData:
     elif table_item.__class__.__name__ == 'Annotation':
         return AnnotationData(**kvpair)
     
-def to_profile(data: Union[ArticleData, NoteData])\
-    -> Union[ProfileData, ProfileNote]:
-    if isinstance(data, ArticleData):
-        data = data.to_space()
-        return ProfileData(
-            title=data.title,
-            year=data.year,
-            journal=data.journal,
-            author=data.author,
-            add_time=data.add_time,
-            rank=0
-        )
-    elif isinstance(data, NoteData):
-        data = data.to_space()
-        return ProfileNote(
-            title=data.title,
-            note=data.note,
-            date=data.date,
-            torder=data.torder
-        )
 
 # --------------------------------------------------------------------------------
 # SQL operations
@@ -157,6 +137,8 @@ def reset_article(data: ArticleData, article: Article):
     article.year = data.year
     article.doi = data.doi
     article.local_path = data.local_path
+    if article.add_time is None:
+        article.add_time = data.add_time
     session.commit()
 
 def reset_keywords(keywords: List[Keyword], article: Article):
@@ -168,8 +150,9 @@ def reset_note(data: NoteData, note: Note):
     session = global_session()
     note.title = data.title
     note.note = data.note
-    note.date = data.date
-    note.related_content = data.related_content
+    note.add_time = data.add_time
+    note.changed_time = data.changed_time
+    note.quote = data.quote
     note.torder = data.torder
     session.commit()
 
@@ -198,31 +181,34 @@ def delete_note(note_id):
 # --------------------------------------------------------------------------------
 # tree operations
 
-def add_folder(archi: Archi, folder_name: str, index: int):
-    if archi.find(folder_name):
+def add_folder(sylva: Sylva, folder_name: str, index: int):
+    if sylva.find(folder_name):
         folder_name = folder_name + ' (1)'
 
     if index == -1:
-        archi.data.append({'name': folder_name, 'data': []})
+        sylva.data.append({'name': folder_name, 'data': []})
     else:
-        archi.data.insert(index, {'name': folder_name, 'data': []})
+        sylva.data.insert(index, {'name': folder_name, 'data': []})
     return folder_name
 
-def add_folder_article(archi: Archi, folder_name: str, index: int, article_id: int):
-    assert(archi.find(folder_name) is not None)
-    archi.find(folder_name).append(article_id)
+def add_folder_article(sylva: Sylva, folder_name: str, index: int, article_id: int):
+    assert(sylva.find(folder_name) is not None)
+    sylva.find(folder_name).append(article_id)
 
-def rename_folder(archi: Archi, folder_name: str, index: int, new_name: str):
-    assert(archi.data[index]['name'] == folder_name)
-    archi.data[index]['name'] = new_name
+def rename_folder(sylva: Sylva, folder_name: str, index: int, new_name: str):
+    assert(sylva.data[index]['name'] == folder_name)
+    sylva.data[index]['name'] = new_name
 
-def delete_folder(archi: Archi, folder_name: str, index: int):
-    assert(archi.data[index]['name'] == folder_name)
-    archi.data.pop(index)
+def delete_folder(sylva: Sylva, folder_name: str, index: int):
+    assert(sylva.data[index]['name'] == folder_name)
+    sylva.data.pop(index)
 
-def delete_folder_article(archi: Archi, folder_name: str, index1: int, index2: int):
-    assert(archi.data[index1]['name'] == folder_name)
-    archi.data[index1]['data'].pop(index2)
+def delete_folder_article(sylva: Sylva, folder_name: str, index1: int, index2: int):
+    assert(sylva.data[index1]['name'] == folder_name)
+    sylva.data[index1]['data'].pop(index2)
+
+def get_time():
+    return datetime.datetime.now().strftime('%Y-%m-%d')
 
 # --------------------------------------------------------------------------------
 # re operations

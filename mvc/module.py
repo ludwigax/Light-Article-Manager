@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QModelIndex
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QMenu, QAction
+from PySide6.QtCore import Qt, QModelIndex
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon, QAction
+from PySide6.QtWidgets import QMenu
 
 from mvc.model import (SearchProxyModel, BinestedItem,
     create_article_item, create_folder_item)
@@ -8,8 +8,8 @@ from mvc.model import COLUMNS_WIDTH
 from mvc.base import BaseModule
 import mvc.funcs as funcs
 
-from archi import ProfileData
-from utils.opn import to_data, to_profile
+from sylva import NamedDict, FolderData
+from utils.opn import to_data
 
 class ModelViewModule(BaseModule):
     def __init__(self, parent, columns=None):
@@ -38,6 +38,7 @@ class ModelViewModule(BaseModule):
         self.tree_view.header().sectionClicked.connect(self._sort_by_column)
         # self.tree_view.header().sectionDoubleClicked.connect(self._sort_by_column) # TODO disabled
         self.tree_view.clicked.connect(self._row_selected)
+        self.tree_view.doubleClicked.connect(self._row_focused_selected)
 
     # slots function
     def _sort_by_column(self, col_idx: int):
@@ -49,7 +50,10 @@ class ModelViewModule(BaseModule):
         # end
 
     def _sort_by_search(self, text: str):
-        self.search_proxy_mdoel(text, 0)
+        if text == "":
+            self.proxy_model.resetOrder()
+            return
+        self.search_proxy_model(text, 0)
         # outside function
         # end
 
@@ -63,6 +67,18 @@ class ModelViewModule(BaseModule):
             return
         # outside function
         funcs.on_row_selected(self, item.article_id)
+        # end
+
+    def _row_focused_selected(self, index):
+        source_index = self.proxy_model.mapToSource(index)
+        print(f"Row focused selected: {source_index.row()}")
+
+        source_index = source_index.siblingAtColumn(0)
+        item = self.model.itemFromIndex(source_index)
+        if isinstance(item, BinestedItem) and item.is_folder:
+            return
+        # outside function
+        funcs.on_row_focused_selected(self, item.article_id)
         # end
 
 class NonNestedModule(ModelViewModule):
@@ -79,11 +95,11 @@ class NonNestedModule(ModelViewModule):
         action_list = []
 
         sort_action = QAction("Sort", self.tree_view)
+        sort_action.triggered.connect(self._sort_by_menu)
         menu.addAction(sort_action)
         menu.addSeparator()
 
         new_article_action = QAction("New", self.tree_view)
-        sort_action.triggered.connect(self._sort_by_menu)
         new_article_action.triggered.connect(lambda: self._new_article(source_index))
         menu.addAction(new_article_action)
 
@@ -97,9 +113,9 @@ class NonNestedModule(ModelViewModule):
         menu.exec_(self.tree_view.viewport().mapToGlobal(point))
 
     def _sort_by_menu(self):
+        self.proxy_model.sort_order = Qt.DescendingOrder
         col_idx, sort_order = self.sort_proxy_model(0)
         self.tree_view.header().setSortIndicator(0, Qt.AscendingOrder)
-        self.proxy_model.sort_order = Qt.AscendingOrder
 
     def _new_article(self, index = None):
         # outside function
@@ -107,8 +123,7 @@ class NonNestedModule(ModelViewModule):
         # end
         if not flag:
             return
-        data = to_profile(data)
-        self.add_item(article_id, data)
+        self.append_item(article_id, data)
 
     def _modify_article(self, index):
         index = index.siblingAtColumn(0)
@@ -118,7 +133,6 @@ class NonNestedModule(ModelViewModule):
         # end
         if not flag:
             return
-        data = to_profile(data)
         self.remove_item(index)
         self.insert_item(article_id, data, index)
 
@@ -138,7 +152,7 @@ class NestedModule(ModelViewModule):
         self.set_nested(True)
         self.enable_context_menu()
 
-    def add_item(self, article_id: int, is_folder: bool, data: ProfileData, item: BinestedItem = None): # folder_idx: 0, -1
+    def append_item(self, article_id: int, is_folder: bool, data: NamedDict, item: BinestedItem = None): # folder_idx: 0, -1
         if not is_folder and item is None:
             raise AttributeError("Article cannot add to ROOT!")
         row = self.package_item(article_id, True, is_folder, data)
@@ -148,7 +162,7 @@ class NestedModule(ModelViewModule):
         else:
             item.appendRow(row)
     
-    def insert_item(self, article_id: int, is_folder: bool, data: ProfileData, index, offset = 0):
+    def insert_item(self, article_id: int, is_folder: bool, data: NamedDict, index, offset = 0):
         if self.item_level(index) == 1:
             index = index.parent()
         item = self.package_item(article_id, True, is_folder, data)
@@ -175,7 +189,7 @@ class NestedModule(ModelViewModule):
             level += 1
         return level
     
-    def search_proxy_mdoel(self, text: str, col_idx: int = 0):
+    def search_proxy_model(self, text: str, col_idx: int = 0):
         # override function
         indices = {}
         if self.proxy_model.external_indices:
@@ -225,34 +239,36 @@ class NestedModule(ModelViewModule):
 
         if index.isValid():
             new_article_action = QAction("New Article", self.tree_view)
-            new_article_action.triggered.connect(lambda: self._new_article_archi(source_index))
+            new_article_action.triggered.connect(lambda: self._new_article_sylva(source_index))
             menu.addAction(new_article_action)
 
             if not item.is_folder:
+                modify_article_action = QAction("Modify Article", self.tree_view)
+                modify_article_action.triggered.connect(lambda: self._modify_article(source_index))
                 remove_article_action = QAction("Remove Article", self.tree_view)
-                remove_article_action.triggered.connect(lambda: self._remove_article_archi(source_index))
-                menu.addAction(remove_article_action)
+                remove_article_action.triggered.connect(lambda: self._remove_article_sylva(source_index))
+                menu.addActions([modify_article_action, remove_article_action])
             menu.addSeparator()
 
         new_folder_action = QAction("New Folder", self.tree_view)
-        new_folder_action.triggered.connect(lambda: self._new_folder_archi(source_index))
+        new_folder_action.triggered.connect(lambda: self._new_folder_sylva(source_index))
         menu.addAction(new_folder_action)
 
         if index.isValid() and item.is_folder:
             rename_folder_action = QAction("Rename Folder", self.tree_view)
             delete_folder_action = QAction("Delete Folder", self.tree_view)
-            rename_folder_action.triggered.connect(lambda: self._rename_folder_archi(source_index))
-            delete_folder_action.triggered.connect(lambda: self._delete_folder_archi(source_index))
+            rename_folder_action.triggered.connect(lambda: self._rename_folder_sylva(source_index))
+            delete_folder_action.triggered.connect(lambda: self._delete_folder_sylva(source_index))
             menu.addActions([rename_folder_action, delete_folder_action])
 
         menu.exec_(self.tree_view.viewport().mapToGlobal(point))
 
     def _sort_by_menu(self):
+        self.proxy_model.sort_order = Qt.DescendingOrder
         col_idx, sort_order = self.sort_proxy_model(0)
         self.tree_view.header().setSortIndicator(0, Qt.AscendingOrder)
-        self.proxy_model.sort_order = Qt.AscendingOrder
 
-    def _new_article_archi(self, index):
+    def _new_article_sylva(self, index):
         index = index.siblingAtColumn(0)
         if self.item_level(index) == 1:
             index = index.parent()
@@ -264,9 +280,22 @@ class NestedModule(ModelViewModule):
             return
         # end
         for article_id, data in zip(id_list, datas):
-            self.add_item(article_id, 0, data, item)
+            self.append_item(article_id, 0, data, item)
 
-    def _remove_article_archi(self, index):
+    def _modify_article(self, index):
+        index = index.siblingAtColumn(0)
+        item: BinestedItem = self.model.itemFromIndex(index)
+        article_id = item.article_id
+        # outside function
+        article_id, data, flag = funcs.on_modify_article(self, article_id)
+        if not flag:
+            return
+        # end
+        # data = to_profile(data)
+        # self.remove_item(index)
+        # self.insert_item(article_id, 0, data, index) # TODO refresh function is neededd
+
+    def _remove_article_sylva(self, index):
         index = index.siblingAtColumn(0)
         item: BinestedItem = self.model.itemFromIndex(index)
         assert(not item.is_folder)
@@ -279,7 +308,7 @@ class NestedModule(ModelViewModule):
         # end
         self.remove_item(index) 
 
-    def _new_folder_archi(self, index):
+    def _new_folder_sylva(self, index):
         index = index.siblingAtColumn(0)
         if index.isValid():
             if self.item_level(index) == 1:
@@ -290,10 +319,10 @@ class NestedModule(ModelViewModule):
         # outside function
         folder_name = funcs.on_new_folder_archi(self, "New Folder", row_idx + 1)
         # end
-        item = self.package_item(-1, True, True, ProfileData(folder_name, "", "", "", "", ""))
+        item = self.package_item(-1, True, True, FolderData(folder_name))
         self.model.insertRow(row_idx + 1, item)
 
-    def _rename_folder_archi(self, index):
+    def _rename_folder_sylva(self, index):
         index = index.siblingAtColumn(0)
         item: BinestedItem = self.model.itemFromIndex(index)
         title = item.text()
@@ -304,9 +333,9 @@ class NestedModule(ModelViewModule):
             return
         # end
         self.remove_item(index)
-        self.insert_item(-1, True, ProfileData(folder_name, "", "", "", "", ""), index, offset=0)
+        self.insert_item(-1, True, FolderData(folder_name), index, offset=0)
 
-    def _delete_folder_archi(self, index):
+    def _delete_folder_sylva(self, index):
         index = index.siblingAtColumn(0)
         item: BinestedItem = self.model.itemFromIndex(index)
         idx1 = item.row()

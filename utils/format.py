@@ -5,7 +5,7 @@ from urllib.parse import unquote
 from typing import List, Dict, Tuple
 
 from database import Article, Keyword, Note
-from archi import ArticleData
+from sylva import ArticleData
 
 from utils.opn import matches_pattern, to_data
 import markdown2

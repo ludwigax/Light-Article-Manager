@@ -1,19 +1,16 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLineEdit, QPushButton
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLineEdit, QPushButton
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QIcon, QPixmap
 
 import ui.res_rc
 
 class SearchWidget(QWidget):
-    search_signal = pyqtSignal(str)
+    search_signal = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.initUI()
-        self.timer = QTimer()
-        self.timer.setSingleShot(True)
-        self.timer.timeout.connect(self.on_search)
 
     def initUI(self):
         layout = QHBoxLayout()
@@ -22,7 +19,6 @@ class SearchWidget(QWidget):
 
         self.search_box = QLineEdit(self)
         self.search_box.setPlaceholderText('Type to search...')
-        self.search_box.textChanged.connect(self.on_text_change)
         self.search_box.returnPressed.connect(self.on_search)
         layout.addWidget(self.search_box)
 
@@ -37,13 +33,26 @@ class SearchWidget(QWidget):
 
         self.setLayout(layout)
 
+    def on_search(self):
+        search_text = self.search_box.text()
+        if not search_text:
+            self.search_signal.emit('')
+            return
+        print(f'Searching for: {search_text}')
+        self.search_signal.emit(search_text)
+
+class DelayedSearchWidget(SearchWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.search_box.textChanged.connect(self.on_text_change)
+        self.timer.timeout.connect(self.on_search)
+
     def on_text_change(self):
         self.timer.start(500)  # 500ms delay
 
     def on_search(self):
         self.timer.stop()
-        search_text = self.search_box.text()
-        if not search_text:
-            return
-        print(f'Searching for: {search_text}')
-        self.search_signal.emit(search_text)
+        super().on_search()

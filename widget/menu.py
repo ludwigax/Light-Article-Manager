@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMenu, QAction, QWidget
-from PyQt5.QtCore import Qt, QPoint, QEvent
-from PyQt5.QtGui import QMouseEvent
+from PySide6.QtWidgets import QMenu, QWidget
+from PySide6.QtCore import Qt, QPoint, QEvent
+from PySide6.QtGui import QMouseEvent, QAction
 
 def folder_right_click_menu(widget: QWidget, pos: QPoint):
     menu = QMenu(widget)

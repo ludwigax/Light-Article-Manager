@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QSortFilterProxyModel, Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PySide6.QtCore import QSortFilterProxyModel, Qt
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
 
 import ui.res_rc # TODO
 
@@ -76,7 +76,7 @@ def create_article_item(article_id, text) -> BinestedItem:
     return item
 
 def create_note_item(note_id, text) -> PropItem:
-    icon = QIcon(":icons/note.png")
+    icon = QIcon(":icons/post-it.png")
     item = PropItem(['note_id'], [note_id], icon, text)
     return item
 
@@ -92,7 +92,7 @@ COLUMNS_WIDTH = {
 
 NOTE_COLUMNS_WIDTH = {
     'Title': 240,
-    'Date': 80,
+    'Modified Time': 95,
     'Article': 240,
     '': 24
 }

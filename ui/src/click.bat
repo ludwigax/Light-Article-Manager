@@ -1,2 +1,10 @@
-activate pyqt5
-pyuic5 search_item.ui -o test.py
+setlocal enabledelayedexpansion
+
+call activate pyqt5
+
+for %%f in (*.ui) do (
+    set filename=%%~nf
+    pyside6-uic %%f -o .\test\!filename!.py
+)
+
+echo Conversion complete.

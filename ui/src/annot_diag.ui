@@ -23,10 +23,10 @@
     </rect>
    </property>
    <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+    <enum>Qt::Orientation::Horizontal</enum>
    </property>
    <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+    <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
    </property>
   </widget>
   <widget class="QScrollArea" name="scrollArea">
@@ -68,7 +68,7 @@ QScrollBar:vertical {
           <number>0</number>
          </property>
          <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
+          <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
          </property>
          <property name="topMargin">
           <number>5</number>
@@ -91,28 +91,27 @@ QScrollBar:vertical {
             <font>
              <family>Arial</family>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
            <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
            <property name="text">
             <string>Note</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
            </property>
           </widget>
          </item>
          <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Preferred</enum>
+            <enum>QSizePolicy::Policy::Preferred</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -157,10 +156,10 @@ QScrollBar:vertical {
 }</string>
          </property>
          <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
          </property>
          <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
          </property>
          <property name="plainText">
           <string/>
@@ -177,7 +176,7 @@ QScrollBar:vertical {
           <number>0</number>
          </property>
          <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
+          <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
          </property>
          <property name="topMargin">
           <number>5</number>
@@ -200,28 +199,27 @@ QScrollBar:vertical {
             <font>
              <family>Arial</family>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
            <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
            <property name="text">
-            <string>Quote</string>
+            <string>Refer</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
            </property>
           </widget>
          </item>
          <item>
           <spacer name="verticalSpacer_2">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Preferred</enum>
+            <enum>QSizePolicy::Policy::Preferred</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -266,10 +264,10 @@ QScrollBar:vertical {
 }</string>
          </property>
          <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
          </property>
          <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
          </property>
          <property name="plainText">
           <string/>
@@ -286,7 +284,7 @@ QScrollBar:vertical {
           <number>0</number>
          </property>
          <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
+          <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
          </property>
          <property name="topMargin">
           <number>5</number>
@@ -309,28 +307,27 @@ QScrollBar:vertical {
             <font>
              <family>Arial</family>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
            <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
            <property name="text">
             <string>Cite</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
            </property>
           </widget>
          </item>
          <item>
           <spacer name="verticalSpacer_3">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Expanding</enum>
+            <enum>QSizePolicy::Policy::Expanding</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -393,10 +390,10 @@ QScrollBar:vertical {
          <item>
           <spacer name="verticalSpacer_4">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Expanding</enum>
+            <enum>QSizePolicy::Policy::Expanding</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>

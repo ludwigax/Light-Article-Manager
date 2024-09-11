@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>post-it.png</file>
     <file>synchron_blue.png</file>
     <file>synchron_red.png</file>
     <file>open-folder.png</file>

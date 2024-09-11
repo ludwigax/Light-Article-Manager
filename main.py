@@ -2,7 +2,7 @@ import os
 import sys
 from typing import List, Tuple
 
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 # from widget.mainwindow import LMainWindow
 from widget.mainwindow2 import LMainWindow
 

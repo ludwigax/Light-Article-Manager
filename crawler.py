@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 import requests
 import os
 
@@ -39,8 +39,8 @@ def download_article(doi, filename, worker_handle=None):
 
 
 class DownloadWorker(QThread):
-    update_progress = pyqtSignal(int)
-    terminate_progress = pyqtSignal(str)
+    update_progress = Signal(int)
+    terminate_progress = Signal(str)
 
     def __init__(self, doi, filename):
         QThread.__init__(self)

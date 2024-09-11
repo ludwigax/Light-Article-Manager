@@ -1,9 +1,9 @@
 import sys
 from typing import List, Tuple
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QMouseEvent
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QListWidgetItem, \
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QListWidgetItem, \
     QMessageBox, QDialog, QInputDialog
 
 from ui import Ui_AddItem, Ui_InfoItem, Ui_KeywordItem, Ui_ArticleItem, Ui_FolderItem, Ui_CheckItem, Ui_FolderAddItem

@@ -14,6 +14,17 @@ article_keyword = Table(
 )
 
 class Article(Base):
+    r"""
+    Article Structure:
+
+    - `title`: Title of the article
+    - `author`: Author(s) of the article
+    - `journal`: Journal where the article was published
+    - `year`: Publication year
+    - `doi`: DOI of the article
+    - `local_path`: Local file path of the article
+    - `add_time`: Date the article was added
+    """
     __tablename__ = 'articles'
 
     id = Column(Integer, primary_key=True)
@@ -29,39 +40,64 @@ class Article(Base):
     annotations = relationship("Annotation", back_populates="article", cascade="all, delete-orphan")
 
 class Keyword(Base):
+    r"""
+    Keyword Structure:
+
+    - `word`: The keyword
+    - `count`: Number of articles containing this keyword
+    """
+
     __tablename__ = 'keywords'
 
     id = Column(Integer, primary_key=True)
     word = Column(String)
+    count = Column(Integer, default=0)
     articles = relationship("Article", secondary=article_keyword, back_populates="keywords")
 
 class Note(Base):
-    r""" the structure of related_content
-    [{
-        "doi": "doi_string",
-        "local_path": "~/example.pdf",
-        "article_id": 1,
-    }]
+    r"""
+    Note Structure:
+    - `title`: Title of the note
+    - `note`: Content of the note
+    - `add_time`: Time when the note was added
+    - `changed_time`: Time when the note was last modified
+    - `quote`: Related article quotes (list of dictionaries with `doi`, `local_path`, `article_id`)
+    - `torder`: Order of the note
     """
+
     __tablename__ = 'notes'
 
     id = Column(Integer, primary_key=True)
     title = Column(String)
     note = Column(String)
-    date = Column(String)
-    related_content = Column(JSON, default=[])
+    add_time = Column(String)
+    changed_time = Column(String)
+    quote = Column(JSON, default=[])
     torder = Column(Integer)
     article_id = Column(Integer, ForeignKey('articles.id'))
     article = relationship("Article", back_populates="notes")
 
 class Annotation(Base):
+    r"""
+    Annotation Structure:
+
+    - `annot`: Content of the annotation.
+    - `refer`: Reference information related to the annotation.
+    - `page_number`: Page number where the annotation appears.
+    - `add_time`: Time when the annotation was added.
+    - `changed_time`: Time when the annotation was last modified.
+    - `colour`: Highlight color for the annotation.
+    - `torder`: Order of the annotation
+    """
+    
     __tablename__ = 'annotations'
 
     id = Column(Integer, primary_key=True)
     annot = Column(String)
-    date = Column(String)
+    refer = Column(String)
     page_number = Column(Integer)
-    quote_content = Column(String)
+    add_time = Column(String)
+    changed_time = Column(String)
     colour = Column(String)
     torder = Column(Integer) # needed?
     article_id = Column(Integer, ForeignKey('articles.id'))
@@ -73,7 +109,7 @@ def create_database():
         engine = create_engine('sqlite:///repository.db')
         Base.metadata.create_all(engine)
 
-def export_articles(db_path: str, output_path: str = 'articles.csv'):
+def export_articles(db_path: str, output_path: str = 'articles.csv'): # TODO
     import csv
     from sqlalchemy import create_engine, MetaData, Table
 
@@ -87,7 +123,7 @@ def export_articles(db_path: str, output_path: str = 'articles.csv'):
 
     with open(output_path, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(['id', 'title', 'author', 'journal', 'year', 'doi', 'local_path'])
+        writer.writerow(['id', 'title', 'author', 'journal', 'year', 'doi', 'local_path', 'add_time'])
         for row in articles_data:
             writer.writerow(row)
     print("success export articles.csv")
@@ -120,7 +156,7 @@ if __name__=="__main__":
     # Session = sessionmaker(bind=engine)
     # session = Session()
 
-    # with open('test utils/articles.csv', 'r', encoding='utf-8') as file:
+    # with open('articles.csv', 'r', encoding='utf-8') as file:
     #     reader = csv.DictReader(file)
     #     for row in reader:
     #         article = Article(
@@ -130,7 +166,8 @@ if __name__=="__main__":
     #             journal=row['journal'],
     #             year=row['year'] if row['year'] else None,
     #             doi=row['doi'] if row['doi'] else None,
-    #             local_path=row['local_path']
+    #             local_path=row['local_path'],
+    #             add_time=row['add_time']
     #         )
     #         session.add(article)
 

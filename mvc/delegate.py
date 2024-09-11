@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QStyle
-from PyQt5.QtGui import  QIcon
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QStyle
+from PySide6.QtGui import  QIcon
+from PySide6.QtCore import Qt
 
 from mvc import funcs
 

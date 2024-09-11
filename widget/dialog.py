@@ -6,10 +6,10 @@ from typing import List, Tuple
 import markdown2
 import datetime
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QListWidgetItem, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QListWidgetItem, \
     QMessageBox, QDialog, QInputDialog
-from PyQt5.QtGui import QFontMetrics
-from PyQt5.QtCore import Qt
+from PySide6.QtGui import QFontMetrics
+from PySide6.QtCore import Qt
 from ui import Ui_ArticleDialog, Ui_KeywordDialog, Ui_NoteDialog, Ui_GroupDialog
 
 import utils.opn
@@ -19,7 +19,7 @@ from widget.action import setTextEditFit
 
 from database import Article, Keyword, Note
 import database
-from archi import ArticleData, NoteData, AnnotationData
+from sylva import ArticleData, NoteData, AnnotationData
 
 class LArticleDialog(QDialog, Ui_ArticleDialog):
     def __init__(self, parent=None, widget_title=None):
@@ -31,13 +31,14 @@ class LArticleDialog(QDialog, Ui_ArticleDialog):
 
         self.btn_add.clicked.connect(self.AddLocalPath)
         self.btn_clear.clicked.connect(self.RmLocalPath)
-        self.textedit_title.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_author.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_journal.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_year.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_doi.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
+        self.textedit_title.setTextChangedSlot(setTextEditFit)
+        self.textedit_author.setTextChangedSlot(setTextEditFit)
+        self.textedit_journal.setTextChangedSlot(setTextEditFit)
+        self.textedit_year.setTextChangedSlot(setTextEditFit)
+        self.textedit_doi.setTextChangedSlot(setTextEditFit)
 
     def get_data(self):
+        time = datetime.datetime.now().strftime("%Y-%m-%d")
         data = {
             'title': self.textedit_title.toPlainText(),
             'author': self.textedit_author.toPlainText(),
@@ -45,7 +46,7 @@ class LArticleDialog(QDialog, Ui_ArticleDialog):
             'year': self.textedit_year.toPlainText(),
             'doi': self.textedit_doi.toPlainText(),
             'local_path': self.local_path,
-            'add_time': datetime.datetime.now().strftime("%Y-%m-%d"),
+            'add_time': time,
         }
         for k, v in data.items():
             if isinstance(v, str):
@@ -97,42 +98,39 @@ class LNoteDialog(QDialog, Ui_NoteDialog):
 
         self.btn_add.clicked.connect(self.AddCite)
         self.btn_rm.clicked.connect(self.RemoveCite)
-        self.textedit_title.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_note.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.textedit_date.setHook(keyPress_hook=setTextEditFit, keyPress_state=False)
-        self.related_content = []
-
-        self.textedit_date.setPlainText(datetime.datetime.now().strftime("%Y-%m-%d"))
+        self.textedit_title.setTextChangedSlot(setTextEditFit)
+        self.textedit_note.setTextChangedSlot(setTextEditFit)
+        self.quote = []
 
     def get_data(self):
+        time = datetime.datetime.now().strftime("%Y-%m-%d")
         data = {
             'title': self.textedit_title.toPlainText(),
             'note': self.textedit_note.toPlainText(),
-            'date': self.textedit_date.toPlainText(),
-            'related_content': [],
+            'add_time': time,
+            'quote': [],
         }
         for k, v in data.items():
             if isinstance(v, str):
                 data[k] = v.strip() if v.strip() else None
-        data['related_content'] = self.related_content
+        data['quote'] = self.quote
         return NoteData(**data)
     
     def set_data(self, note: Note):
         self.textedit_title.setPlainText(note.title)
         self.textedit_note.setPlainText(note.note)
-        self.textedit_date.setPlainText(note.date)
-        for content in note.related_content:
-            self.related_content.append(content)
+        for content in note.quote:
+            self.quote.append(content)
             self.list_content.addItem(content)
     
     def AddCite(self):
         if content := QInputDialog.getText(self, 'Add related content', 'content')[0]:
-            self.related_content.append(content)
+            self.quote.append(content)
             self.list_content.addItem(content)
         
     def RemoveCite(self):
         if item := self.list_content.currentItem():
-            self.related_content.pop(self.list_content.row(item))
+            self.quote.pop(self.list_content.row(item))
             self.list_content.takeItem(self.list_content.row(item))
 
 class LGroupDialog(QDialog, Ui_GroupDialog):
@@ -159,8 +157,8 @@ class LGroupDialog(QDialog, Ui_GroupDialog):
     
 import mvc.base
 from mvc.model import BinestedItem
-from PyQt5.QtWidgets import QVBoxLayout, QDialogButtonBox
-from utils.opn import to_data, to_profile
+from PySide6.QtWidgets import QVBoxLayout, QDialogButtonBox
+from utils.opn import to_data
 class CheckStateDialog(QDialog):
     def __init__(self, parent=None, title=None, columns=None):
         super().__init__(parent=parent)
@@ -183,7 +181,7 @@ class CheckStateDialog(QDialog):
     def init_data(self):
         articles = utils.opn.get_all_articles()
         for article in articles:
-            row = self.module.package_item(article.id, data = to_profile(to_data(article)))
+            row = self.module.package_item(article.id, data = to_data(article))
             row[0].setCheckable(True)
             self.module.model.appendRow(row)
 

@@ -1,7 +1,7 @@
 import datetime
 from typing import List
 
-from archi import ArticleData
+from sylva import ArticleData
 
 class BIB_EXTRACTOR:
     keymap = {

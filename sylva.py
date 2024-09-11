@@ -3,7 +3,9 @@ import json
 from typing import List, Dict
 from collections import UserDict, namedtuple, UserList
 
-class Archi(UserList):
+class Sylva(UserList):
+    sylva_path = "./sylva.json"
+
     def __setattr__(self, name: str, value: list) -> None:
         try:
             if name == 'data':
@@ -33,24 +35,17 @@ class Archi(UserList):
         return None
         
     def load(self) -> None:
-        if not os.path.exists('archi.json'):
-            with open('archi.json', 'w') as file:
-                json.dump([], file)
-        with open('archi.json', 'r') as file:
-            self.data = json.load(file)
+        if not os.path.exists(Sylva.sylva_path):
+            with open(Sylva.sylva_path, 'w') as f:
+                json.dump([], f)
+        with open(Sylva.sylva_path, 'r') as f:
+            self.data = json.load(f)
 
     def save(self) -> None:
-        with open('archi.json', 'w') as file:
-            json.dump(self.data, file, indent=4)
+        with open(Sylva.sylva_path, 'w') as f:
+            json.dump(self.data, f, indent=4)
 
-ProfileData = namedtuple(
-    'ProfileData', ['title', 'year', 'journal', 'author', 'add_time', 'rank']
-    )
-
-ProfileNote = namedtuple(
-    'ProfileNote', ['title', 'note', 'date', 'torder']
-    )
-
+# retieve data from database and give a inferface to access it
 class NamedDict(UserDict):
     def __init__(self, **kwargs):
         filtered_kwargs = {k: v for k, v in kwargs.items() if k in self._fields()}
@@ -82,16 +77,18 @@ class NamedDict(UserDict):
                 self.data[key] = ''
         return self
     
+FolderData = lambda folder_name: ArticleData(title=folder_name)
+    
 class ArticleData(NamedDict):
     def _fields(self):
         return ['title', 'author', 'journal', 'year', 'doi', 'local_path', 'add_time']
     
 class NoteData(NamedDict):
     def _fields(self):
-        return ['title', 'note', 'date', 'related_content', 'torder']
+        return ['title', 'note', 'add_time', 'changed_time', 'quote', 'torder']
     
 class AnnotationData(NamedDict):
     def _fields(self):
-        return ['annot', 'date', 'page_number', 'quote_content', 'colour', 'torder']
+        return ['annot', 'refer', 'page_number', 'add_time', 'changed_time', 'colour', 'torder']
 
                          

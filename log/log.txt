@@ -1,0 +1,12 @@
+√ context menu sort with bad logic
+√ problem in search item
+√ web engine for online search
+√ fix the layout
+√ auto open pdf file
+bad pdf layout
+bad sidebar layout
+√ drag pdf and save
+high quality search and RAG
+√ online multi thread
+√ add note in a edit board
+√ tool bar with beauty button

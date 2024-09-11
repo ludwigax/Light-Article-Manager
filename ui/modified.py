@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QPlainTextEdit, QTextBrowser, QTextEdit, QLabel, QWidget, QLineEdit
-from PyQt5.QtGui import QKeyEvent, QMouseEvent, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFontMetrics
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QPlainTextEdit, QTextBrowser, QTextEdit, QLabel, QWidget, QLineEdit
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFontMetrics
+from PySide6.QtCore import Qt
 
 class Modifier:
     def setHook(self, **kwargs):
@@ -10,6 +10,13 @@ class Modifier:
 class LPlainTextEdit(QPlainTextEdit, Modifier):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+    def setTextChangedSlot(self, slot_function):
+        self.setLineWrapMode(QPlainTextEdit.WidgetWidth)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        func = lambda: slot_function(self)
+        self.textChanged.connect(func)
 
     def keyPressEvent(self, ev: QKeyEvent) -> None:
         if hook := getattr(self, "keyPress_hook", None):

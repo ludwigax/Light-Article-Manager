@@ -1,66 +1,105 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QDockWidget, QVBoxLayout, QWidget, QSplitter
-from PyQt5.QtWidgets import QTextBrowser
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QToolBar, QColorDialog, QFontDialog
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor, QFont, QAction
 
-from mvc.notem import NoteModule
-from archi import ProfileNote
 
-class CodeEditorExample(QMainWindow):
+class EditableTextEdit(QTextEdit):
+    editingChanged = Signal(bool)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setStyleSheet("border: none;")
+        self.setReadOnly(True)
+        self.is_locked = True
+
+    def mouseDoubleClickEvent(self, event):
+        self.setReadOnly(False)
+        self.is_locked = False
+        self.editingChanged.emit(self.is_locked)
+        print("Editing mode enabled.")
+        super().mouseDoubleClickEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_S and event.modifiers() == Qt.ControlModifier:
+            self.setReadOnly(True)  # Ctrl+S 锁定文本框
+            self.is_locked = True
+            self.editingChanged.emit(self.is_locked)  # 发出编辑模式锁定的信号
+            print("Editing mode locked.")
+        else:
+            super().keyPressEvent(event)  # 继续处理其他按键事件
+
+
+class TextEditorApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.initUI()
+        self.base_window_title = "Text Editor with Style Options"  # 基础窗口标题
+        self.setWindowTitle(self.base_window_title)
+        self.resize(800, 600)
 
-    def initUI(self):
-        self.setWindowTitle("Code Editor Example")
-        self.setGeometry(100, 100, 800, 600)
+        self.title_edit = EditableTextEdit()
+        self.title_edit.setPlaceholderText("Enter Title Here")
+        self.title_edit.setStyleSheet("font-size: 24px; font-weight: bold; border: none;")  # 固定样式
+        self.title_edit.editingChanged.connect(self.update_window_title)  # 连接信号到槽
 
-        # 中央窗口区域
-        # central_widget = QWidget()
-        # self.setCentralWidget(central_widget)
+        self.text_edit = EditableTextEdit()
+        self.text_edit.editingChanged.connect(self.update_window_title)  # 连接信号到槽
 
-        # # 使用 QSplitter 创建可调整大小的面板
-        # splitter = QSplitter()
+        self.toolbar = self.addToolBar("Text Formatting")
 
-        # # 左侧面板
-        # left_panel = QTextEdit()
-        # left_panel.setPlaceholderText("Explorer")
-        # splitter.addWidget(left_panel)
+        font_action = QAction("Font", self)
+        font_action.triggered.connect(self.change_font)
+        self.toolbar.addAction(font_action)
 
-        # # 中间面板
-        # center_panel = QTextEdit()
-        # center_panel.setPlaceholderText("Editor")
-        # splitter.addWidget(center_panel)
+        font_size_action = QAction("Font Size", self)
+        font_size_action.triggered.connect(self.change_font_size)
+        self.toolbar.addAction(font_size_action)
 
-        # # 右侧面板
-        # right_panel = QTextEdit()
-        # right_panel.setPlaceholderText("Properties")
-        # splitter.addWidget(right_panel)
+        font_color_action = QAction("Font Color", self)
+        font_color_action.triggered.connect(self.change_font_color)
+        self.toolbar.addAction(font_color_action)
 
-        # layout = QVBoxLayout()
-        # layout.addWidget(splitter)
-        # central_widget.setLayout(layout)
+        # 布局
+        layout = QVBoxLayout()
+        layout.addWidget(self.title_edit)
+        layout.addWidget(self.text_edit)
 
-        # 创建一个顶部停靠窗口
-        top_dock = QDockWidget("top", self)
-        top_dock.setWidget(QTextEdit())
-        self.addDockWidget(Qt.TopDockWidgetArea, top_dock)
-        top_dock.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea | Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
 
-        # 创建一个底部停靠窗口
-        bottom_dock = QDockWidget("Console", self)
-        bottom_dock.setWidget(QTextEdit())
-        self.addDockWidget(Qt.BottomDockWidgetArea, bottom_dock)
-    
-        # 创建一个左侧停靠窗口
-        left_dock = QDockWidget("Project Explorer", self)
-        left_dock.setWidget(QTextEdit())
-        self.addDockWidget(Qt.LeftDockWidgetArea, left_dock)
+    def update_window_title(self, is_locked):
+        """更新窗口标题，未锁定时显示 *，锁定后移除 *"""
+        print("is_locked:", is_locked)
+        if is_locked:
+            self.setWindowTitle(self.base_window_title)
+        else:
+            self.setWindowTitle(self.base_window_title + " *")  # 标题加上 * 表示未锁定
+
+    def change_font(self):
+        flag, font = QFontDialog.getFont(self)
+        if flag:
+            self.text_edit.set_font(font)
+
+    def change_font_size(self):
+        flag, font = QFontDialog.getFont(self)
+        if flag:
+            size = font.pointSize()
+            self.text_edit.set_font_size(size)
+
+    def change_font_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.text_edit.set_font_color(color)
+
+    def get_text_content(self):
+        """获取正文内容"""
+        return self.text_edit.toPlainText()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ex = CodeEditorExample()
-    ex.show()
-    sys.exit(app.exec_())
+    window = TextEditorApp()
+    window.show()
+    sys.exit(app.exec())

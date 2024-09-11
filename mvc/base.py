@@ -1,11 +1,11 @@
-from PyQt5.QtCore import QSortFilterProxyModel, Qt, QModelIndex
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QTreeView, QHeaderView
+from PySide6.QtCore import QSortFilterProxyModel, Qt, QModelIndex
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PySide6.QtWidgets import QTreeView, QHeaderView
 
 from mvc.model import (SearchProxyModel, BinestedItem, create_article_item, create_folder_item)
 from mvc.model import COLUMNS_WIDTH
 
-from archi import ProfileData
+from sylva import NamedDict
 
 class BaseModule:
     def __init__(self, parent, columns=None, refer_columns=COLUMNS_WIDTH):
@@ -54,24 +54,22 @@ class BaseModule:
         self._nested = flag
         self.tree_view.setRootIsDecorated(flag)
     
-    def add_item(self, article_id: int, data: ProfileData):
+    def append_item(self, article_id: int, data: NamedDict):
         row = self.package_item(article_id, data = data)
         self.model.appendRow(row)
 
-    def insert_item(self, article_id: int, data: ProfileData, index):
+    def insert_item(self, article_id: int, data: NamedDict, index):
         row = self.package_item(article_id, data = data)
         self.model.insertRow(index.row(), row)
 
-    def package_item(self, article_id: int, is_nested: bool = False, is_folder: bool = None, data: ProfileData = None):
+    def package_item(self, article_id: int, is_nested: bool = False, is_folder: bool = None, data: NamedDict = None):
         assert(not is_nested or is_folder is not None)
         row = []
-        if is_nested:
-            if is_folder:
-                item = create_folder_item(data.title)
-            else:
-                item = create_article_item(article_id, data.title)
+        if is_nested and is_folder:
+            item = create_folder_item(data.title)
         else:
             item = create_article_item(article_id, data.title)
+
         if "Title" in self.columns:
             row.append(item)
         if "Year" in self.columns:
@@ -88,7 +86,7 @@ class BaseModule:
             row.append(add_time_item)
         if "Rank" in self.columns:
             rank_item = QStandardItem()
-            rank_item.setData(data.rank, Qt.DisplayRole)
+            rank_item.setData(0, Qt.DisplayRole) # data.rank # TODO
             row.append(rank_item)
         if "" in self.columns:
             # QIcon(':icons/plus.png') # TODO
@@ -102,7 +100,7 @@ class BaseModule:
     def remove_item(self, index):
         self.model.removeRow(index.row())
 
-    def search_proxy_mdoel(self, text: str, col_idx: int = 0):
+    def search_proxy_model(self, text: str, col_idx: int = 0):
         # type_list = []
         indices = {}
         if self.proxy_model.external_indices:
@@ -126,6 +124,8 @@ class BaseModule:
             else:
                 key = source_index.parent().row()
             indices.setdefault(key, []).append(source_index.row())
+        if indices == {}:
+            indices = {-1: []}
         self.proxy_model.setExternalOrder(indices)
         return col_idx, self.proxy_model.sort_order
 

@@ -1,12 +1,13 @@
 import os
 from typing import List, Tuple
 
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QTreeWidgetItem, QTreeWidget, QListWidget
+from PySide6.QtWidgets import QWidget, QListWidgetItem, QTreeWidgetItem, QTreeWidget, QListWidget, \
+    QPlainTextEdit
 from database import Article, Keyword, Note
 import utils.format as fmt
 import utils.opn as opn
 
-from archi import ArticleData, NoteData
+from sylva import ArticleData, NoteData
 
 from func import global_session
 
@@ -20,7 +21,7 @@ def checkPath(path: str):
         return True
     return False
 
-def setTextEditFit(widget: QWidget, params): # hook function
+def setTextEditFit(widget: QPlainTextEdit): # hook function
     # font_metrics = QFontMetrics(widget.font())
     line_count = widget.document().lineCount()
     # print(line_count, font_metrics.lineSpacing())

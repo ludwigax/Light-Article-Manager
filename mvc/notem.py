@@ -1,6 +1,6 @@
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMenu, QAction
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon, QAction
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QMenu
 
 from mvc.model import NOTE_COLUMNS_WIDTH
 from mvc.model import SearchProxyModel, PropItem, create_note_item
@@ -9,9 +9,8 @@ from mvc.base import BaseModule
 from mvc import funcs
 
 import utils.opn as opn
-from utils.opn import to_profile
 
-from archi import ProfileNote
+from sylva import UserDict
 
 class NoteModule(BaseModule):
     def __init__(self, parent):
@@ -23,21 +22,21 @@ class NoteModule(BaseModule):
         self.set_slots()
         self.enable_context_menu()
 
-    def add_item(self, note_id: int, data: ProfileNote):
+    def append_item(self, note_id: int, data: UserDict):
         row = self.package_item(note_id, data = data)
         self.model.appendRow(row)
 
-    def insert_item(self, note_id: int, data: ProfileNote, index):
+    def insert_item(self, note_id: int, data: UserDict, index):
         row = self.package_item(note_id, data = data)
         self.model.insertRow(index.row(), row)
 
-    def package_item(self, note_id: int, data: ProfileNote):
+    def package_item(self, note_id: int, data: UserDict):
         row = []
         if "Title" in self.columns:
             item: PropItem = create_note_item(note_id, data.title)
             row.append(item)
-        if "Date" in self.columns:
-            date_item = QStandardItem(data.date)
+        if "Modified Time" in self.columns:
+            date_item = QStandardItem(data.changed_time)
             row.append(date_item)
         if "" in self.columns:
             button_item = QStandardItem(QIcon(), " ")
@@ -65,6 +64,8 @@ class NoteModule(BaseModule):
             self._menu = False
 
     def context_menu(self, point):
+        if not self.focus_id:
+            return
         index = self.tree_view.indexAt(point)
         index = index.siblingAtColumn(0)
         source_index = self.proxy_model.mapToSource(index)
@@ -73,7 +74,9 @@ class NoteModule(BaseModule):
 
         new_note_action = QAction("New", self.tree_view)
         new_note_action.triggered.connect(lambda: self._new_note(source_index))
-        menu.addAction(new_note_action)
+        new_note_passive_action = QAction("New Passive", self.tree_view)
+        new_note_passive_action.triggered.connect(lambda: self._new_note_passive(source_index))
+        menu.addActions([new_note_passive_action, new_note_action])
         if index.isValid():
             modify_note_action = QAction("Modify", self.tree_view)
             delete_note_action = QAction("Delete", self.tree_view)
@@ -98,14 +101,23 @@ class NoteModule(BaseModule):
         funcs.on_note_row_selected(self, item.note_id)
         # end
 
+    def _new_note_passive(self, index = None):
+        # outside function
+        note_id, data, flag = funcs.on_new_note_passive(self, self.focus_id)
+        # end
+        if not flag:
+            return
+        
+        self.append_item(note_id, data)
+
     def _new_note(self, index = None):
         # outside function
         note_id, data, flag = funcs.on_new_note(self, self.focus_id)
         # end
         if not flag:
             return
-        data = to_profile(data)
-        self.add_item(note_id, data)
+        
+        self.append_item(note_id, data)
     
     def _modify_note(self, index):
         index = index.siblingAtColumn(0)
@@ -115,7 +127,7 @@ class NoteModule(BaseModule):
         # end
         if not flag:
             return 
-        data = to_profile(data)
+
         self.remove_item(index)
         self.insert_item(note_id, data, index)
 
