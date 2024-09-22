@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 from PySide6.QtWidgets import QApplication
 # from widget.mainwindow import LMainWindow
-from widget.mainwindow2 import LMainWindow
+from complex.mainwindow2 import LMainWindow
 
 os.environ["LAM_WORK_DIR"] = os.path.dirname(os.path.abspath(__file__))
 

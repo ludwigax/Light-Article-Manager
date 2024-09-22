@@ -8,6 +8,7 @@ from database import Article, Keyword, Note
 from sylva import ArticleData
 
 from utils.opn import matches_pattern, to_data
+from utils.opn import get_absolute_path, get_related_path
 import markdown2
 
 # --------------------------------------------------------------------------------
@@ -34,6 +35,7 @@ CSS_THEMES = {
         .time-style { font-size: 12px; color: grey; }
         .highlight { background-color: yellow; }
         .keyword-style { background-color: grey; color: white; }
+        .abstract-style { font-size: 12px; color: black; }
     """
 }
 
@@ -44,7 +46,8 @@ FIELD_STYLES = {
     'year': 'year-style',
     'doi': 'doi-style',
     'local_path': 'path-style',
-    'add_time': 'time-style'
+    'add_time': 'time-style',
+    'abstract': 'abstract-style',
 }
 
 # this is deprecated decorator
@@ -63,7 +66,7 @@ SEP = "\n\n---\n\n"
 def ANCHOR_TEXT(x, local_path):
     if local_path is None:
         return x
-    return f'<a href="{absolute_path(local_path)}">{x}</a>'
+    return f'<a href="{get_absolute_path(local_path)}">{x}</a>'
 
 ARTICLE_INFO = lambda tl, au, jn, yr, url, local_path: f"""**{tl}**<br>
 {CITE_TEXT(au)}<br>
@@ -126,13 +129,15 @@ def wrap_html(html_content: str, css_content: str) -> str:
 def anchor_path(path: str) -> str:
     if path is None:
         return None
-    return f'<a href="{absolute_path(path)}">{related_path(path)}</a>'
+    return f'<a href="{get_absolute_path(path)}">{get_related_path(path)}</a>'
 
 def get_article_html(article: Article, article_only=False) -> str:
     ArticleData = to_data(article)
     raw = ""
     raw_dict: Dict[str, str] = {}
     for key in ArticleData.keys():
+        if key == "id":
+            continue
         if key == "local_path":
             raw_dict[key] = f"<span class='{FIELD_STYLES[key]}'>{anchor_path(ArticleData[key])}</span><br>\n"
             continue
@@ -142,6 +147,9 @@ def get_article_html(article: Article, article_only=False) -> str:
         raw_dict[key] = f"<span class='{FIELD_STYLES[key]}'>{ArticleData[key]}</span><br>\n"
     raw += raw_dict['title'] + raw_dict['author'] + raw_dict['journal'].replace("<br>\n", "") +\
         raw_dict['year'] + raw_dict['doi'] + raw_dict['local_path'] + raw_dict['add_time']
+
+    abstract = f"<span class='{FIELD_STYLES['abstract']}'><b>Abstract: </b> {article.abstract}</span><br>\n"
+    raw += abstract
 
     if not article_only:
         if article.keywords:
@@ -193,22 +201,3 @@ def progressbar(percentage: int) -> str:
     elif restblock==3:
         partblock = "▍"
     return f'{fullblock}{partblock}'
-
-def absolute_path(path: str) -> str:
-    if path is None:
-        return None
-    if path.strip():
-        path = path.replace("/", "_")
-        return os.path.join(os.environ.get("LAM_WORK_DIR"), "papers", f"{path}")
-    
-def related_path(path: str) -> str:
-    if path is None:
-        return None
-    return os.path.basename(path)
-
-def open_path(path) -> None:
-    if path is None:
-        return
-    path = unquote(path.toString())
-    os.startfile(path)
-    

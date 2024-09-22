@@ -7,16 +7,26 @@ class Modifier:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
+# slot functions --------------------------------------------------------------
+def setTextEditFit(widget: QPlainTextEdit): # slot function
+    # font_metrics = QFontMetrics(widget.font())
+    line_count = widget.document().lineCount()
+    # print(line_count, font_metrics.lineSpacing())
+    widget.setFixedHeight(line_count * 16 + 12) # 16 is the line spacing, 12 is the padding
+
+
+# modified widgets -----------------------------------------------------------
 class LPlainTextEdit(QPlainTextEdit, Modifier):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def setTextChangedSlot(self, slot_function):
+    def setTextChangedSlot(self, slot="edit_fit"):
         self.setLineWrapMode(QPlainTextEdit.WidgetWidth)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        func = lambda: slot_function(self)
-        self.textChanged.connect(func)
+        if slot == "edit_fit":
+            self.textChanged.connect(lambda: setTextEditFit(self))
 
     def keyPressEvent(self, ev: QKeyEvent) -> None:
         if hook := getattr(self, "keyPress_hook", None):

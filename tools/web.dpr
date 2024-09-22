@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 import urllib.parse
 
@@ -39,7 +40,8 @@ def google_scholar_get(kwd: str):
 
 def parse_google_scholar_results(response):
     soup = BeautifulSoup(response.text, 'html.parser')
-    elements = soup.find_all(class_="gs_r gs_or gs_scl")
+    pattern = re.compile(r"\bgs_r gs_or gs_scl\b")
+    elements = soup.find_all(class_=pattern)
 
     results = []
     for elem in elements:
@@ -55,7 +57,7 @@ def parse_google_scholar_results(response):
                 doi = decoded_url
                 for b in a_element.find_all('b'):
                     b.unwrap()
-                    title = a_element.decode_contents()
+                title = a_element.decode_contents()
 
             if title:
                 results.append({

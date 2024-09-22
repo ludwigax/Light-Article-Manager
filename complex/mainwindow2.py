@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog,\
     QMessageBox, QDialog, QTextBrowser, QListWidget, QTextEdit, QTreeWidgetItem, QInputDialog,\
-    QToolBar, QDockWidget, QSizePolicy
+    QToolBar, QSizePolicy
 from PySide6.QtCore import Qt, Signal, QByteArray, QSignalBlocker
 from PySide6.QtGui import QAction
 
@@ -13,14 +13,13 @@ import PySide6QtAds as QtAds
 from PySide6.QtWidgets import QTabWidget, QVBoxLayout
 
 from ui import Ui_MainWindow2
-from widget.dialog import LArticleDialog, LKeywordDialog, LNoteDialog, LGroupDialog
-from widget.widget import LSearchItem, LNoteItem, LAddItem, LArticleItem, LFolderItem, LCheckItem, \
-    LFolderAddItem
-import widget.action as act
+import utils.thread
+from widget.dialog import new_article_dialog
 from widget.search import DelayedSearchWidget
 from widget.text import EditableTextEdit
-from widget.zone import ModuleViewZone, MainBrowserZone, NoteViewZone, NoteEditZone, PDFViewerZone, \
-    OnlineSearchZone
+from complex.zone import ModuleViewZone, MainBrowserZone, NoteViewZone, NoteEditZone, PDFViewerZone
+from complex.online_search import OnlineSearchZone
+from complex.advanced_search import AdvancedSearchZone
 
 from crawler import DownloadWorker
 
@@ -34,6 +33,7 @@ import utils
 import utils.format as fmt
 import utils.opn as opn
 from utils.opn import to_data
+import utils.combo as cb
 
 from mvc.module import NestedModule, NonNestedModule
 from mvc.notem import NoteModule
@@ -48,11 +48,9 @@ from func import global_session
 
 import pickle as pkl
 
+from widget.emitter import emitter
+
 class LMainWindow(QMainWindow, Ui_MainWindow2):
-    render_signal = Signal(int)
-    render_note_signal = Signal(int)
-    delete_note_signal = Signal(int)
-    open_pdf_signal = Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -68,27 +66,34 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         QtAds.CDockManager.setAutoHideConfigFlags(QtAds.CDockManager.DefaultAutoHideConfig)
         self.dock_manager = QtAds.CDockManager(self)
 
-        self.mvm = NonNestedModule(self, columns=None)
-        self.nvm = NestedModule(self, columns=None)
-        self.notem = NoteModule(self)
-        self.browser_m = QTextBrowser(self)
-        self.textedit_nt_tl = EditableTextEdit(self)
-        self.textedit_nt_cn = EditableTextEdit(self)
-
         self.is_notelock = [1, 1]
         self.pdf_area = None
         self.pdf_set = set()
 
         # define the dock view
-        self.zone_moduleview = ModuleViewZone(self, self)
-        self.zone_mainbrowser = MainBrowserZone(self, self)
-        self.zone_noteview = NoteViewZone(self, self)
-        self.zone_noteedit = NoteEditZone(self, self)
-        self.zone_onlinesearch = OnlineSearchZone(self, self)
+        self.zone_moduleview = ModuleViewZone(self)
+        self.zone_mainbrowser = MainBrowserZone(self)
+        self.zone_noteview = NoteViewZone(self)
+        self.zone_noteedit = NoteEditZone(self)
+        self.zone_onlinesearch = OnlineSearchZone(self)
+        self.zone_advancedsearch = AdvancedSearchZone(self)
+
+        self.task_queue = utils.thread.TaskQueue(1)
+        self.zone_onlinesearch.set_taskqueue(self.task_queue)
+        self.zone_advancedsearch.set_taskqueue(self.task_queue)
+
+        self.widgets = {
+            "mvm": self.zone_moduleview.mvm,
+            "nvm": self.zone_moduleview.nvm,
+            "notem": self.zone_noteview.notem,
+            "browser": self.zone_mainbrowser.browser,
+            "nttl": self.zone_noteedit.textedit_tl,
+            "ntcn": self.zone_noteedit.textedit_cn,
+        }
 
         # init the necessary data
-        self.zone_moduleview.init_data()
-        self.zone_noteedit.init_data(None)
+        emitter.render_main_viewer.emit()
+        emitter.clear_note_editor.emit()
 
         dock1 = QtAds.CDockWidget("Main View", self)
         dock1.setWidget(self.zone_moduleview)
@@ -97,6 +102,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
 
         dock3 = QtAds.CDockWidget("Note View", self)
         dock3.setWidget(self.zone_noteview)
+        dock3.setMinimumSizeHintMode(QtAds.CDockWidget.MinimumSizeHintFromDockWidget)
         area3 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.BottomDockWidgetArea, dock3, area1)
 
         dock2 = QtAds.CDockWidget("Main Browser", self)
@@ -111,17 +117,21 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         dock5.setWidget(self.zone_onlinesearch)
         area5 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.LeftDockWidgetArea, dock5)
 
+        dock6 = QtAds.CDockWidget("Advanced Search", self)
+        dock6.setWidget(self.zone_advancedsearch)
+        area6 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.LeftDockWidgetArea, dock6)
+
         self.dock_widgets = {
             "module": dock1,
             "main": dock2,
             "note": dock3,
             "note_edit": dock4,
             "online_search": dock5,
+            "advanced_search": dock6,
         }
 
         self._setupMenuAction()
         self._setupSlots()
-        self._setupBrowserAnchor()
 
         self.loadPerspective()
 
@@ -137,22 +147,10 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         # self.actionMicrosoft_Modern
 
     def _setupSlots(self):
-        self.render_signal.connect(self.showArticleMain)
-        # temp
-        self.render_note_signal.connect(self.showNote_temp)
-        self.delete_note_signal.connect(self.clearNoteOnDelete)
-        self.open_pdf_signal.connect(self.onOpenArticlePDF)
+        emitter.open_pdf_internal.connect(self.onOpenArticlePDF)
+        emitter.change_editor_mode.connect(self.changeEditMode)
+        # self.zone_onlinesearch.import_signal.connect(self.onOnlineSearchImport) TODO
 
-        # widget slot
-        self.textedit_nt_tl.editingChanged.connect(lambda x: self.onEditSwitching(x, 0))
-        self.textedit_nt_cn.editingChanged.connect(lambda x: self.onEditSwitching(x, 1))
-        self.zone_onlinesearch.import_signal.connect(self.onOnlineSearchImport)
-
-    def _setupBrowserAnchor(self):
-        def anchor_fcn(path):
-            if act.openAritcleFile(path):
-                self.showArticleMain(self.focus_id)
-        self.browser_m.anchorClicked.connect(anchor_fcn)   
 
     # --------------------------------------------------------------------------------
     # mainwindow GUI functions
@@ -160,39 +158,28 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
     def setFocusArticle(self, article_id: int = None):
         self.focus_id = article_id
 
-    def renderBrowser(self, content: str): # DELETE this FUNCTION
-        self.browser.setHtml(content)
-
-    def clearBrowser(self):
-        self.browser.clear()
-
     # --------------------------------------------------------------------------------
     # slot functions
     def onImportClicked(self):
         if not (file_path := QFileDialog.getOpenFileName(self, 'Open file', '', fmt.BIB_FILTER)[0]):
             return
         data = ref.REF_PARSER.extract(file_path)
-        if not data:
-            return
-        self.importArticle(data)
+        if data:
+            self.importArticle(data)
+        
 
     def onImportBatchClicked(self):
         if not (file_paths := QFileDialog.getOpenFileNames(self, 'Open folder', '', fmt.BIB_FILTER)[0]):
             return
         for file_path in file_paths:
             data = ref.REF_PARSER.extract(file_path)
-            if not data:
-                continue
-            self.importArticle(data)
+            if data:
+                self.importArticle(data)
     
     def onManualClicked(self):
-        dialog = LArticleDialog(self, 'Add manually')
-        if dialog.exec_() == QDialog.Rejected:
-            return
-        data = dialog.get_data()
-        if not data.title:
-            return
-        self.importArticle(data)
+        data = new_article_dialog(self)
+        if data:
+            self.importArticle(data)
 
     def onSaveLayoutClicked(self):
         self.savePerspective()
@@ -210,7 +197,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         if article_id in self.pdf_set:
             return
         
-        self.pdf_viewer = PDFViewerZone(self, self)
+        self.pdf_viewer = PDFViewerZone(self)
         self.pdf_viewer.init_data(osp.join("papers", pdf_path))
 
         dock5 = QtAds.CDockWidget("PDF Viewer", self)
@@ -240,33 +227,15 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
             "year": result['published_year'],
             "doi": result['doi'],
             "add_time": datetime.datetime.now().strftime("%Y-%m-%d"),
+            "abstract": result['abstract'],
         }
+        if data["doi"] == "No DOI available":
+            data["doi"] = None
+        if data["abstract"] == "No abstract available":
+            data["abstract"] = None
         data = ArticleData(**data)
         self.importArticle(data)
 
-    def onEditSwitching(self, flag, order):
-        self.is_notelock[order] = flag
-        if self.zone_noteedit.note_id is None:
-            return
-        
-        if self.is_notelock[0] and self.is_notelock[1]:
-            self.dock_widgets["note_edit"].setWindowTitle("Note Browser")
-        else:
-            self.dock_widgets["note_edit"].setWindowTitle("Note Browser *")
-
-        if not flag:
-            return
-        title = self.textedit_nt_tl.toPlainText()
-        content = self.textedit_nt_cn.toHtml()
-        note = opn.get_note(self.zone_noteedit.note_id)
-        data = to_data(note)
-        data.title = title
-        data.note = content
-        data.changed_time = opn.get_time()
-        opn.reset_note(data, note)
-        if self.zone_noteview.article_id == note.article_id:
-            self.zone_noteview.clear_data()
-            self.zone_noteview.init_data(note.article_id)
 
     # --------------------------------------------------------------------------------
     # combo functions
@@ -274,29 +243,16 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         if isinstance(datas, ArticleData):
             datas = [datas]
         for data in datas:
-            if data.local_path is not None and not act.checkPath(fmt.absolute_path(data.local_path)):
+            if data.local_path is not None and not opn.check_path(opn.get_absolute_path(data.local_path)):
                 data.local_path = None
-            article = opn.create_article(data)
-            opn.add_article(article)
-            self.mvm.append_item(article.id, data)
+            cb.new_article(None, -1, data)
         return True
-
-    def showArticleMain(self, article: Article | int):
-        print(f"clicked {article}")
-        if isinstance(article, int):
-            article = opn.get_article(article)
-        self.zone_mainbrowser.init_data(article.id)
-        self.zone_noteview.clear_data()
-        self.zone_noteview.init_data(article.id)
-        self.setFocusArticle(article.id)
-
-    def showNote_temp(self, note_id):
-        print(f"clicked {note_id}")
-        self.zone_noteedit.init_data(note_id)
-
-    def clearNoteOnDelete(self, note_id):
-        if self.zone_noteedit.note_id == note_id:
-            self.zone_noteedit.init_data(None)
+    
+    def changeEditMode(self, flag):
+        if flag:
+            self.dock_widgets["note_edit"].setWindowTitle("Note Browser")
+        else:
+            self.dock_widgets["note_edit"].setWindowTitle("Note Browser *")
 
     def savePerspective(self):
         with open("layout.xml", "wb") as f:
@@ -307,5 +263,6 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
             self.dock_manager.restoreState(f.read())
 
     def closeEvent(self, event):
+        # self.savePerspective()
         self.dock_manager.deleteLater()
         super().closeEvent(event)

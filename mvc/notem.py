@@ -3,14 +3,16 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMenu
 
 from mvc.model import NOTE_COLUMNS_WIDTH
-from mvc.model import SearchProxyModel, PropItem, create_note_item
+from mvc.model import SearchProxyModel, BinestedItem, create_item
 from mvc.base import BaseModule
 
-from mvc import funcs
-
 import utils.opn as opn
+import utils.combo as cb
 
-from sylva import UserDict
+from widget.dialog import delete_note_dialog
+from widget.emitter import emitter
+
+from sylva import NamedDict
 
 class NoteModule(BaseModule):
     def __init__(self, parent):
@@ -22,18 +24,18 @@ class NoteModule(BaseModule):
         self.set_slots()
         self.enable_context_menu()
 
-    def append_item(self, note_id: int, data: UserDict):
-        row = self.package_item(note_id, data = data)
+    def append_item(self, data: NamedDict):
+        row = self.package_item(data = data)
         self.model.appendRow(row)
 
-    def insert_item(self, note_id: int, data: UserDict, index):
-        row = self.package_item(note_id, data = data)
+    def insert_item(self, data: NamedDict, index):
+        row = self.package_item(data = data)
         self.model.insertRow(index.row(), row)
 
-    def package_item(self, note_id: int, data: UserDict):
+    def package_item(self, data: NamedDict):
         row = []
         if "Title" in self.columns:
-            item: PropItem = create_note_item(note_id, data.title)
+            item: BinestedItem = create_item(2, data.id, data.title)
             row.append(item)
         if "Modified Time" in self.columns:
             date_item = QStandardItem(data.changed_time)
@@ -73,15 +75,15 @@ class NoteModule(BaseModule):
         menu = QMenu(self.tree_view)
 
         new_note_action = QAction("New", self.tree_view)
-        new_note_action.triggered.connect(lambda: self._new_note(source_index))
+        new_note_action.triggered.connect(lambda: self.menu_new_note(source_index))
         new_note_passive_action = QAction("New Passive", self.tree_view)
-        new_note_passive_action.triggered.connect(lambda: self._new_note_passive(source_index))
+        new_note_passive_action.triggered.connect(lambda: self.menu_new_note_passive(source_index))
         menu.addActions([new_note_passive_action, new_note_action])
         if index.isValid():
             modify_note_action = QAction("Modify", self.tree_view)
             delete_note_action = QAction("Delete", self.tree_view)
-            modify_note_action.triggered.connect(lambda: self._modify_note(source_index))
-            delete_note_action.triggered.connect(lambda: self._delete_note(source_index))
+            modify_note_action.triggered.connect(lambda: self.menu_modify_note(source_index))
+            delete_note_action.triggered.connect(lambda: self.menu_delete_note(source_index))
             menu.addActions([modify_note_action, delete_note_action])
 
         menu.exec_(self.tree_view.viewport().mapToGlobal(point))
@@ -90,6 +92,8 @@ class NoteModule(BaseModule):
         # disable the sort function TODO
         # self.tree_view.header().sectionClicked.connect(self._sort_by_column)
         self.tree_view.clicked.connect(self._row_selected)
+        emitter.new_note.connect(self._new_note)
+        emitter.delete_note.connect(self._delete_note)
 
     def _row_selected(self, index):
         source_index = self.proxy_model.mapToSource(index)
@@ -98,45 +102,39 @@ class NoteModule(BaseModule):
         source_index = source_index.siblingAtColumn(0)
         item = self.model.itemFromIndex(source_index) # TODO
         # outside function
-        funcs.on_note_row_selected(self, item.note_id)
+        cb.row_selected_notem(source_index, item.id)
         # end
 
-    def _new_note_passive(self, index = None):
-        # outside function
-        note_id, data, flag = funcs.on_new_note_passive(self, self.focus_id)
-        # end
-        if not flag:
-            return
-        
-        self.append_item(note_id, data)
+    # menu functions
+    def menu_new_note(self, index): # TODO
+        pass
 
-    def _new_note(self, index = None):
-        # outside function
-        note_id, data, flag = funcs.on_new_note(self, self.focus_id)
-        # end
-        if not flag:
-            return
-        
-        self.append_item(note_id, data)
-    
-    def _modify_note(self, index):
-        index = index.siblingAtColumn(0)
-        item: PropItem = self.model.itemFromIndex(index)
-        # outside function
-        note_id, data, flag = funcs.on_modify_note(self, item.note_id, self.focus_id)
-        # end
-        if not flag:
-            return 
+    def menu_modify_note(self, index):
+        pass
 
-        self.remove_item(index)
-        self.insert_item(note_id, data, index)
+    def menu_new_note_passive(self, index):
+        cb.new_note_passive(index, self.focus_id)
+
+    def menu_delete_note(self, index):
+        item = self.model.itemFromIndex(index)
+        if delete_note_dialog(self.parent()):
+            cb.delete_note(index, item.id)
+
+    # slots functions
+    def _new_note(self, index, data = None):
+        self.append_item(data)
 
     def _delete_note(self, index):
-        index = index.siblingAtColumn(0)
-        item: PropItem = self.model.itemFromIndex(index)
-        # outside function
-        flag = funcs.on_delete_note(self, item.note_id)
-        # end
-        if not flag:
-            return
         self.remove_item(index)
+    
+    # def _modify_note(self, index):
+    #     index = index.siblingAtColumn(0)
+    #     item: PropItem = self.model.itemFromIndex(index)
+    #     # outside function
+    #     note_id, data, flag = funcs.on_modify_note(self, item.note_id, self.focus_id)
+    #     # end
+    #     if not flag:
+    #         return 
+
+    #     self.remove_item(index)
+    #     self.insert_item(note_id, data, index)

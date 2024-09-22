@@ -1,105 +1,113 @@
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QToolBar, QColorDialog, QFontDialog
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QFont, QAction
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
+                               QPushButton, QLabel, QListWidget, QListWidgetItem)
+from PySide6.QtCore import Qt
 
-
-class EditableTextEdit(QTextEdit):
-    editingChanged = Signal(bool)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setStyleSheet("border: none;")
-        self.setReadOnly(True)
-        self.is_locked = True
-
-    def mouseDoubleClickEvent(self, event):
-        self.setReadOnly(False)
-        self.is_locked = False
-        self.editingChanged.emit(self.is_locked)
-        print("Editing mode enabled.")
-        super().mouseDoubleClickEvent(event)
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_S and event.modifiers() == Qt.ControlModifier:
-            self.setReadOnly(True)  # Ctrl+S 锁定文本框
-            self.is_locked = True
-            self.editingChanged.emit(self.is_locked)  # 发出编辑模式锁定的信号
-            print("Editing mode locked.")
-        else:
-            super().keyPressEvent(event)  # 继续处理其他按键事件
-
-
-class TextEditorApp(QMainWindow):
+class SearchWindow(QWidget):
     def __init__(self):
         super().__init__()
+        
+        # 初始化窗口
+        self.setWindowTitle("Search Window")
+        self.setGeometry(100, 100, 600, 400)
+        
+        # 主布局
+        main_layout = QVBoxLayout()
+        
+        # 搜索框和按钮（虽然暂时没有功能）
+        search_layout = QHBoxLayout()
+        self.search_input = QLineEdit(self)
+        self.search_input.setPlaceholderText("Enter search keyword...")
+        self.search_button = QPushButton("Search", self)
+        search_layout.addWidget(self.search_input)
+        search_layout.addWidget(self.search_button)
+        
+        # 搜索状态标签
+        self.status_label = QLabel(self)
+        self.status_label.setText("Status: Showing preloaded search results")
+        
+        # ListWidget 显示每页的标题
+        self.list_widget = QListWidget(self)
+        self.list_widget.itemClicked.connect(self.goto_page)
+        
+        # 用于显示搜索结果内容的 QLabel
+        self.result_label = QLabel(self)
+        self.result_label.setAlignment(Qt.AlignCenter)
+        self.result_label.setWordWrap(True)  # 允许换行
+        
+        # 翻页按钮
+        navigation_layout = QHBoxLayout()
+        self.prev_button = QPushButton("Previous", self)
+        self.prev_button.clicked.connect(self.prev_page)
+        self.next_button = QPushButton("Next", self)
+        self.next_button.clicked.connect(self.next_page)
+        navigation_layout.addWidget(self.prev_button)
+        navigation_layout.addWidget(self.next_button)
+        
+        # 将组件添加到主布局
+        main_layout.addLayout(search_layout)
+        main_layout.addWidget(self.status_label)
+        main_layout.addWidget(self.list_widget)
+        main_layout.addWidget(self.result_label)
+        main_layout.addLayout(navigation_layout)
+        
+        self.setLayout(main_layout)
+        
+        # 预加载的搜索结果
+        self.search_results = self.mock_search_results()
+        self.current_page = 0
+        
+        # 加载预设的结果
+        self.load_results()
+    
+    def mock_search_results(self):
+        """模拟一些预加载的搜索结果"""
+        return [
+            {'title': 'Result 1', 'content': 'This is the content for result 1.'},
+            {'title': 'Result 2', 'content': 'This is the content for result 2.'},
+            {'title': 'Result 3', 'content': 'This is the content for result 3.'},
+            {'title': 'Result 4', 'content': 'This is the content for result 4.'},
+            {'title': 'Result 5', 'content': 'This is the content for result 5.'}
+        ]
+    
+    def load_results(self):
+        """加载预设的搜索结果到界面"""
+        self.list_widget.clear()
+        
+        for index, result in enumerate(self.search_results):
+            # 将每页的标题添加到 ListWidget
+            list_item = QListWidgetItem(f"Page {index + 1}: {result['title']}")
+            self.list_widget.addItem(list_item)
+        
+        # 显示第一页
+        self.current_page = 0
+        self.update_page()
+    
+    def goto_page(self, item):
+        """跳转到指定页面"""
+        self.current_page = self.list_widget.row(item)
+        self.update_page()
+    
+    def update_page(self):
+        """更新显示当前页面的内容"""
+        result = self.search_results[self.current_page]
+        self.result_label.setText(result['content'])
+        self.status_label.setText(f"Status: Viewing page {self.current_page + 1}/{len(self.search_results)}")
+    
+    def prev_page(self):
+        """翻到上一页"""
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.update_page()
+    
+    def next_page(self):
+        """翻到下一页"""
+        if self.current_page < len(self.search_results) - 1:
+            self.current_page += 1
+            self.update_page()
 
-        self.base_window_title = "Text Editor with Style Options"  # 基础窗口标题
-        self.setWindowTitle(self.base_window_title)
-        self.resize(800, 600)
-
-        self.title_edit = EditableTextEdit()
-        self.title_edit.setPlaceholderText("Enter Title Here")
-        self.title_edit.setStyleSheet("font-size: 24px; font-weight: bold; border: none;")  # 固定样式
-        self.title_edit.editingChanged.connect(self.update_window_title)  # 连接信号到槽
-
-        self.text_edit = EditableTextEdit()
-        self.text_edit.editingChanged.connect(self.update_window_title)  # 连接信号到槽
-
-        self.toolbar = self.addToolBar("Text Formatting")
-
-        font_action = QAction("Font", self)
-        font_action.triggered.connect(self.change_font)
-        self.toolbar.addAction(font_action)
-
-        font_size_action = QAction("Font Size", self)
-        font_size_action.triggered.connect(self.change_font_size)
-        self.toolbar.addAction(font_size_action)
-
-        font_color_action = QAction("Font Color", self)
-        font_color_action.triggered.connect(self.change_font_color)
-        self.toolbar.addAction(font_color_action)
-
-        # 布局
-        layout = QVBoxLayout()
-        layout.addWidget(self.title_edit)
-        layout.addWidget(self.text_edit)
-
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-    def update_window_title(self, is_locked):
-        """更新窗口标题，未锁定时显示 *，锁定后移除 *"""
-        print("is_locked:", is_locked)
-        if is_locked:
-            self.setWindowTitle(self.base_window_title)
-        else:
-            self.setWindowTitle(self.base_window_title + " *")  # 标题加上 * 表示未锁定
-
-    def change_font(self):
-        flag, font = QFontDialog.getFont(self)
-        if flag:
-            self.text_edit.set_font(font)
-
-    def change_font_size(self):
-        flag, font = QFontDialog.getFont(self)
-        if flag:
-            size = font.pointSize()
-            self.text_edit.set_font_size(size)
-
-    def change_font_color(self):
-        color = QColorDialog.getColor()
-        if color.isValid():
-            self.text_edit.set_font_color(color)
-
-    def get_text_content(self):
-        """获取正文内容"""
-        return self.text_edit.toPlainText()
-
-
+# 运行程序
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = TextEditorApp()
+    app = QApplication([])
+    window = SearchWindow()
     window.show()
-    sys.exit(app.exec())
+    app.exec()

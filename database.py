@@ -32,12 +32,26 @@ class Article(Base):
     author = Column(String)
     journal = Column(String)
     year = Column(String)
+    abstract = Column(String) # TODO
     doi = Column(String)
     local_path = Column(String)
     add_time = Column(String)
     keywords = relationship("Keyword",secondary=article_keyword, back_populates="articles")
     notes = relationship("Note", back_populates="article", cascade="all, delete-orphan")
     annotations = relationship("Annotation", back_populates="article", cascade="all, delete-orphan")
+
+# class ArticleData(Base): # Now use a JSON file to store the data TODO
+#     __tablename__ = 'article_data'
+
+#     id = Column(Integer, primary_key=True)
+#     article_id = Column(Integer)
+#     type = Column(String)
+#     data = Column(String)  # Store JSON encoded float array
+
+#     # Define relationship for ORM usage, though not strictly needed
+#     # You are not establishing a direct ForeignKey constraint, 
+#     # but you can add a relationship for ease of querying if desired
+#     article = relationship("Article", backref="article_data", cascade="all, delete-orphan")
 
 class Keyword(Base):
     r"""
@@ -148,29 +162,29 @@ def import_articles(db_path: str, input_path: str = 'articles.csv'):
 
 create_database()
 if __name__=="__main__":
-    # import csv
+    import csv
 
-    # engine = create_engine('sqlite:///repository.db')  # 这里使用SQLite数据库作为示例，请根据需要修改为实际的数据库URI
-    # Base.metadata.create_all(engine)
+    engine = create_engine('sqlite:///repository.db')  # 这里使用SQLite数据库作为示例，请根据需要修改为实际的数据库URI
+    Base.metadata.create_all(engine)
 
-    # Session = sessionmaker(bind=engine)
-    # session = Session()
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    # with open('articles.csv', 'r', encoding='utf-8') as file:
-    #     reader = csv.DictReader(file)
-    #     for row in reader:
-    #         article = Article(
-    #             id=row['id'],
-    #             title=row['title'],
-    #             author=row['author'],
-    #             journal=row['journal'],
-    #             year=row['year'] if row['year'] else None,
-    #             doi=row['doi'] if row['doi'] else None,
-    #             local_path=row['local_path'],
-    #             add_time=row['add_time']
-    #         )
-    #         session.add(article)
+    with open('articles.csv', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            article = Article(
+                id=row['id'],
+                title=row['title'],
+                author=row['author'],
+                journal=row['journal'],
+                year=row['year'] if row['year'] else None,
+                doi=row['doi'] if row['doi'] else None,
+                local_path=row['local_path'],
+                add_time=row['add_time']
+            )
+            session.add(article)
 
-    # session.commit()
-    # session.close()
+    session.commit()
+    session.close()
     pass

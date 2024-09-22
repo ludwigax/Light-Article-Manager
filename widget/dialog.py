@@ -7,15 +7,15 @@ import markdown2
 import datetime
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QListWidgetItem, \
-    QMessageBox, QDialog, QInputDialog
+    QMessageBox, QDialog, QInputDialog, QLineEdit
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtCore import Qt
 from ui import Ui_ArticleDialog, Ui_KeywordDialog, Ui_NoteDialog, Ui_GroupDialog
 
 import utils.opn
-import utils.format
+import utils.format as fmt
+import utils.opn as opn
 from func import global_session
-from widget.action import setTextEditFit
 
 from database import Article, Keyword, Note
 import database
@@ -31,11 +31,11 @@ class LArticleDialog(QDialog, Ui_ArticleDialog):
 
         self.btn_add.clicked.connect(self.AddLocalPath)
         self.btn_clear.clicked.connect(self.RmLocalPath)
-        self.textedit_title.setTextChangedSlot(setTextEditFit)
-        self.textedit_author.setTextChangedSlot(setTextEditFit)
-        self.textedit_journal.setTextChangedSlot(setTextEditFit)
-        self.textedit_year.setTextChangedSlot(setTextEditFit)
-        self.textedit_doi.setTextChangedSlot(setTextEditFit)
+        self.textedit_title.setTextChangedSlot()
+        self.textedit_author.setTextChangedSlot()
+        self.textedit_journal.setTextChangedSlot()
+        self.textedit_year.setTextChangedSlot()
+        self.textedit_doi.setTextChangedSlot()
 
     def get_data(self):
         time = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -51,6 +51,8 @@ class LArticleDialog(QDialog, Ui_ArticleDialog):
         for k, v in data.items():
             if isinstance(v, str):
                 data[k] = v.strip() if v.strip() else None
+        if data['title'] is None:
+            return None
         return ArticleData(**data)
     
     def set_data(self, article: Article):
@@ -60,16 +62,16 @@ class LArticleDialog(QDialog, Ui_ArticleDialog):
         self.textedit_year.setPlainText(article.year)
         self.textedit_doi.setPlainText(article.doi)
         self.local_path = article.local_path
-        if os.path.exists(str(utils.format.absolute_path(article.local_path))):
+        if os.path.exists(str(opn.get_absolute_path(article.local_path))):
             self.lb_filepath.setText(str(article.local_path))
         else:
             self.lb_filepath.setText("The File May Not Exist!")
 
     def AddLocalPath(self):
-        if file_path := QFileDialog.getOpenFileName(self, 'Open file', '', utils.format.PDF_FILTER)[0]:
-            self.local_path = utils.format.related_path(file_path)
+        if file_path := QFileDialog.getOpenFileName(self, 'Open file', '', fmt.PDF_FILTER)[0]:
+            self.local_path = opn.get_related_path(file_path)
             self.lb_filepath.setText(self.local_path)
-            shutil.copyfile(file_path, utils.format.absolute_path(self.local_path))
+            shutil.copyfile(file_path, opn.get_absolute_path(self.local_path))
 
     def RmLocalPath(self):
         self.local_path = None
@@ -98,8 +100,8 @@ class LNoteDialog(QDialog, Ui_NoteDialog):
 
         self.btn_add.clicked.connect(self.AddCite)
         self.btn_rm.clicked.connect(self.RemoveCite)
-        self.textedit_title.setTextChangedSlot(setTextEditFit)
-        self.textedit_note.setTextChangedSlot(setTextEditFit)
+        self.textedit_title.setTextChangedSlot()
+        self.textedit_note.setTextChangedSlot()
         self.quote = []
 
     def get_data(self):
@@ -181,17 +183,56 @@ class CheckStateDialog(QDialog):
     def init_data(self):
         articles = utils.opn.get_all_articles()
         for article in articles:
-            row = self.module.package_item(article.id, data = to_data(article))
-            row[0].setCheckable(True)
-            self.module.model.appendRow(row)
+            self.module.append_item(to_data(article))
+        for row in range(self.module.model.rowCount()):
+            item: BinestedItem = self.module.model.item(row)
+            item.setCheckable(True)
 
     def get_data(self):
         id_list = []
         for row in range(self.module.model.rowCount()):
-            
             item: BinestedItem = self.module.model.item(row)
             if item.checkState() == Qt.Checked:
-                id_list.append(item.article_id)
+                id_list.append(item.id)
 
         return id_list
 
+
+
+# quickly dialog function -- for testing
+def new_article_dialog(clf, data: Article = None):
+    dialog = LArticleDialog(clf, 'Add New Article')
+    if dialog.exec_() == QDialog.Rejected:
+        return None
+    return dialog.get_data()
+
+def modify_article_dialog(clf, article: Article):
+    dialog = LArticleDialog(clf, 'Modify Article')
+    dialog.set_data(article)
+    if dialog.exec_() == QDialog.Rejected:
+        return None
+    return dialog.get_data()
+
+def delete_article_dialog(clf):
+    if QMessageBox.question(clf, 'Delete', 'Ensure the deletion',
+                            QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+        return True
+    else:
+        return False
+    
+def new_article_sylva_dialog(clf):
+    diag = CheckStateDialog(clf.parent(), 'Add article to folder')
+    if diag.exec_() == QDialog.Rejected:
+        return None
+    return diag.get_data()
+
+def rename_folder_sylva_dialog(clf):
+    new_title, ok_pressed = QInputDialog.getText(clf, "Input", "Changed Name:", QLineEdit.Normal, "")
+    return new_title if ok_pressed else None
+
+def delete_note_dialog(clf):
+    if QMessageBox.question(clf, 'Delete', 'Ensure the deletion',
+                            QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+        return True
+    else:
+        return False

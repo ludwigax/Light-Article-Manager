@@ -2,7 +2,7 @@ from PySide6.QtCore import QSortFilterProxyModel, Qt, QModelIndex
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PySide6.QtWidgets import QTreeView, QHeaderView
 
-from mvc.model import (SearchProxyModel, BinestedItem, create_article_item, create_folder_item)
+from mvc.model import (SearchProxyModel, BinestedItem, create_item)
 from mvc.model import COLUMNS_WIDTH
 
 from sylva import NamedDict
@@ -54,23 +54,20 @@ class BaseModule:
         self._nested = flag
         self.tree_view.setRootIsDecorated(flag)
     
-    def append_item(self, article_id: int, data: NamedDict):
-        row = self.package_item(article_id, data = data)
+    def append_item(self, data: NamedDict):
+        row = self.package_item(data = data)
         self.model.appendRow(row)
 
-    def insert_item(self, article_id: int, data: NamedDict, index):
-        row = self.package_item(article_id, data = data)
+    def insert_item(self, data: NamedDict, index):
+        row = self.package_item(data = data)
         self.model.insertRow(index.row(), row)
 
-    def package_item(self, article_id: int, is_nested: bool = False, is_folder: bool = None, data: NamedDict = None):
-        assert(not is_nested or is_folder is not None)
+    def package_item(self, nested: int = 0, item_type: int = 0, data: NamedDict = None):
+        # assert(not (nested and item_type)) # TODO warning here
         row = []
-        if is_nested and is_folder:
-            item = create_folder_item(data.title)
-        else:
-            item = create_article_item(article_id, data.title)
 
         if "Title" in self.columns:
+            item = create_item(item_type, data.id, data.title)
             row.append(item)
         if "Year" in self.columns:
             year_item = QStandardItem(data.year)

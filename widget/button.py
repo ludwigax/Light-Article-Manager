@@ -1,4 +1,3 @@
-import os
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
@@ -7,6 +6,7 @@ import utils.opn as opn
 import utils.format as fmt
 
 import shutil
+from widget.emitter import emitter
 
 BUTTON_STYLES = {
     "default": "",
@@ -92,6 +92,12 @@ class PDFDropButton(QPushButton):
             self.setText("Open PDF File")
             self.setStyleSheet(True)
 
+    def clear_data(self):
+        self.pdf_path = None
+        self.article_id = None
+        self.setText("Drop PDF File")
+        self.setStyleSheet(False)
+
     def setStyleSheet(self, is_pdf):
         if is_pdf:
             super().setStyleSheet(BUTTON_STYLES["GREEN"])
@@ -101,7 +107,7 @@ class PDFDropButton(QPushButton):
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
-            if len(urls) == 1 and urls[0].toLocalFile().endswith(".pdf"):
+            if self.article_id and len(urls) == 1 and urls[0].toLocalFile().endswith(".pdf"):
                 event.acceptProposedAction()
             else:
                 event.ignore()
@@ -115,13 +121,16 @@ class PDFDropButton(QPushButton):
             self.setText("Open PDF File")
             self.setStyleSheet(True)
             article = opn.get_article(self.article_id)
-            local_path = fmt.related_path(file_path)
-            article.local_path = local_path
-            shutil.copyfile(file_path, fmt.absolute_path(local_path))
-            self.pdf_path = fmt.absolute_path(local_path)
+            local_path = opn.get_related_path(file_path)
+            article.local_path = local_path # TODO fatal error
+            import func
+            func.global_session().commit()
+            shutil.copyfile(file_path, opn.get_absolute_path(local_path))
+            self.pdf_path = opn.get_absolute_path(local_path)
+            emitter.render_main_browser.emit(self.article_id)
 
     def mousePressEvent(self, event):
         if not self.pdf_path:
             return
-        os.startfile(self.pdf_path)
+        opn.open_file(self.pdf_path)
         return super().mousePressEvent(event)

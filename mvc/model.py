@@ -59,26 +59,27 @@ class PropItem(QStandardItem):
         else:
             super().__setattr__(key, value)
 
-class BinestedItem(PropItem): # TODO this changed
-    def __init__(self, is_folder, article_id, *args, **kwargs):
-        keys = ['is_folder', 'article_id']
-        values = [is_folder, article_id]
+class BinestedItem(PropItem):
+    r"""
+    `item_type`: 1 - folder, 0 - article, 2 - note
+    """
+    def __init__(self, item_type, id, *args, **kwargs):
+        keys = ['item_type', 'id']
+        values = [item_type, id]
         super().__init__(keys, values, *args, **kwargs)
 
-def create_folder_item(text) -> BinestedItem:
-    icon = QIcon(":icons/open-folder.png")
-    item = BinestedItem(True, -1, icon, text)
-    return item
+def create_item(type, id, text) -> BinestedItem | PropItem:
+    if type == 1:
+        icon = QIcon(":icons/open-folder.png")
+    elif type == 0:
+        icon = QIcon(":icons/google-docs.png")
+    elif type == 2:
+        icon = QIcon(":icons/post-it.png")
+    else:
+        raise ValueError(f"Invalid type: {type}")
+    
+    return BinestedItem(type, id, icon, text)
 
-def create_article_item(article_id, text) -> BinestedItem:
-    icon = QIcon(":icons/google-docs.png")
-    item = BinestedItem(False, article_id, icon, text)
-    return item
-
-def create_note_item(note_id, text) -> PropItem:
-    icon = QIcon(":icons/post-it.png")
-    item = PropItem(['note_id'], [note_id], icon, text)
-    return item
 
 COLUMNS_WIDTH = {
     'Title': 300,
