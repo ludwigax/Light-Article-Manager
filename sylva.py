@@ -4,7 +4,7 @@ from typing import List, Dict
 from collections import UserDict, namedtuple, UserList
 
 class Sylva(UserList):
-    sylva_path = "./sylva.json"
+    sylva_path = "./cache/sylva.json"
 
     def __setattr__(self, name: str, value: list) -> None: # deprecated
         try:

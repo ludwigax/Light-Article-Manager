@@ -24,7 +24,7 @@
     <item>
      <widget class="Line" name="line">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -63,7 +63,7 @@
      <x>0</x>
      <y>0</y>
      <width>1023</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -120,7 +120,13 @@
      </property>
      <addaction name="actionMicrosoft_Modern"/>
     </widget>
+    <widget class="QMenu" name="menuRecover_layout">
+     <property name="title">
+      <string>Recover layout</string>
+     </property>
+    </widget>
     <addaction name="menuTheme"/>
+    <addaction name="menuRecover_layout"/>
     <addaction name="actionSave_layout"/>
    </widget>
    <addaction name="menuFile"/>
@@ -174,6 +180,31 @@
   <action name="actionSave_layout">
    <property name="text">
     <string>Save layout</string>
+   </property>
+  </action>
+  <action name="actionMain_Browser">
+   <property name="text">
+    <string>Main Browser</string>
+   </property>
+  </action>
+  <action name="actionNote_Browser">
+   <property name="text">
+    <string>Note Browser</string>
+   </property>
+  </action>
+  <action name="actionNote_View">
+   <property name="text">
+    <string>Note View</string>
+   </property>
+  </action>
+  <action name="actionAdvanced_Search">
+   <property name="text">
+    <string>Advanced Search</string>
+   </property>
+  </action>
+  <action name="actionOnline_Search">
+   <property name="text">
+    <string>Online Search</string>
    </property>
   </action>
  </widget>

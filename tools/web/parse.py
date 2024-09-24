@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 
 import re
 import json
+import html
 
 from typing import List, Dict
 
@@ -47,8 +48,8 @@ def google_scholar_parse(response, limit=20):
         data = {
             'title': title,
             'authors': authors,
+            'page_url': page_url,
             'abstract': abstract,
-            'page_url': page_url
         }
         data = {k: clean_string(v) for k, v in data.items()}
         results.append(data)
@@ -67,24 +68,34 @@ def crossref_parse(response):
     if not data['message']['items']:
         return []
     
+    def get_name(author):
+        if 'given' in author:
+            return author['given'] + ' ' + author['family']
+        elif 'name' in author:
+            return author['name']
+        else:
+            return 'null'
+    
     for item in data['message']['items']:
-        article_title = remove_formatting(item.get('title', [''])[0])
-        abstract = remove_formatting(item.get('abstract', None))
-        authors = "; ".join([author['given'] + ' ' + author['family'] for author in item.get('author', [])])
+        article_title = item.get('title', [''])[0]
+        abstract = item.get('abstract', None)
+        authors = "; ".join([get_name(author) for author in item.get('author', [])])
         journal = item.get('container-title', [None])[0]
         year = str(item.get('published-print', {}).get('date-parts', [[None]])[0][0])
         doi = item.get('DOI', None)
-        keywords = item.get('subject', None)
+        # keywords = item.get('subject', None)
         
-        results.append({
+        data = {
             'title': article_title,
-            'abstract': abstract,
             'authors': authors,
-            'year': year,
             'journal': journal,
+            'year': year,
             'doi': doi,
-            'keywords': keywords
-        })
+            'abstract': abstract,
+            # 'keywords': keywords
+        }
+        data = {k: clean_string(v) for k, v in data.items()}
+        results.append(data)
     return results
 
 def wos_query_parse(response, api: str="runQuerySearch"):
@@ -148,24 +159,50 @@ def wos_fullrec_parse(response):
 
     return {
         "title": title,
-        "journal": journal,
-        "doi": doi,
         "authors": authors,
+        "journal": journal,
         "year": year,
+        "doi": doi,
         "abstract": abstract
     }
 
+def arxiv_parse(response):
+    if isinstance(response, requests.Response):
+        response = response.text
+
+    results = []
+    entries = response.split('<entry>')[1:]
+    for entry in entries:
+        title = entry.split('<title>')[1].split('</title>')[0]
+        abstract = entry.split('<summary>')[1].split('</summary>')[0]
+        doi = entry.split('arxiv:')[1].split('</id>')[0] if 'arxiv:' in entry else None
+        year = entry.split('<published>')[1].split('-')[0]
+        authors = "; ".join([author.split('<name>')[1].split('</name>')[0] for author in entry.split('<author>')[1:]])
+        journal = 'arXiv'
+        # keywords = [kw.split('<term>')[1].split('</term>')[0] for kw in entry.split('<category>')[1:]]
+
+        data = {
+            'title': title,
+            'authors': authors,
+            'journal': journal,
+            'year': year,
+            'doi': doi,
+            'abstract': abstract,
+            # 'keywords': keywords
+        }
+        data = {k: clean_string(v) for k, v in data.items()}
+        results.append(data)
+
+    return results
 
 # utils functions ----------------------------------------
-def remove_formatting(text: str):
-    if text is None:
+def clean_string(text):
+    if not text:
         return None
-    sup = text.split("\n")
-    sup = [s.strip() for s in sup if s.strip()]
-    return " ".join(sup)
-
-def clean_string(text: str):
-    if text is None:
-        return None
-    text.replace("\xa0", " ")
-    return text
+    html_tags = re.compile(r'<.*?>')
+    text = re.sub(html_tags, '', text)
+    text = html.unescape(text)
+    text = text.replace('\n', ' ').replace('\r', ' ').strip()
+    text = text.replace("\xa0", " ")
+    clean_text = re.sub(r'\s+', ' ', text)
+    return clean_text

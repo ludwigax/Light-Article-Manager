@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QPushButton, QListWidget, QListWidgetItem
 
 from widget.search import SearchWidget
+from widget.drag import DragLabel, DragListWidget, MetaItem
 
 
 class EasySearchZone(QWidget):
@@ -17,12 +18,12 @@ class EasySearchZone(QWidget):
         self.status_label = QLabel()
         self.status_label.setText("Status: No Task")
 
-        self.list_widget = QListWidget()
+        self.list_widget = DragListWidget(True, True)
         self.list_widget.setFrameShape(QFrame.Panel)
         self.list_widget.setFrameShadow(QFrame.Sunken)
         self.list_widget.setLineWidth(2)
-        self.result_label = QLabel()
-        self.result_label.setText("Search Results")
+        self.result_label = DragLabel(True, True)
+        self.result_label.setText("<p>-- Search Results --</p>")
         self.result_label.setAlignment(Qt.AlignCenter)
         self.result_label.setWordWrap(True)
         self.result_label.setFrameShape(QFrame.Panel)
@@ -45,14 +46,15 @@ class EasySearchZone(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
+        self.set_slots()
     
     def set_slots(self):
         def render_item(item):
             idx = self.list_widget.row(item)
             self.render_label(idx)
         
-        self.prev_button.clicked.connect(self.prev_button)
-        self.next_button.clicked.connect(self.next_button)
+        self.prev_button.clicked.connect(self.prev_item)
+        self.next_button.clicked.connect(self.next_item)
         self.list_widget.itemClicked.connect(render_item) # TODO
 
     def set_search_results(self, results): #  TODO
@@ -63,26 +65,24 @@ class EasySearchZone(QWidget):
         self.render_label(self.idx)
 
     def init_data(self, results):
-        if (not results) and self.results:
+        if self.results:
             self.clear_data()
-            return
-        
         if not results:
             return
         self.results = results
         for res in self.results:
-            item = QListWidgetItem(res["title"])
+            item = MetaItem(res)
             self.list_widget.addItem(item)
 
     def clear_data(self):
+        self.idx = -1
         self.results = []
         for item in reversed(self.list_widget.item()):
             self.list_widget.removeItemWidget(item)
 
     def render_label(self, idx):
-        if not 0 <= idx <= len(self.results):
-            return
-        self.result_label.setText(self.results[idx]["title"])
+        if 0 <= idx <= len(self.results):
+            self.result_label.setMetaData(self.results[idx])
 
     def render_status(self, status):
         self.status_label.setText(f"{status}")

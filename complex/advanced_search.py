@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QL
 from widget.button import StyleButton
 from widget.label import KVLabel
 from widget.search import SearchWidget
+from widget.drag import DragCountLabel, DragListWidget, MetaItem
 
 from complex.easy_search import EasySearchZone
 
@@ -17,12 +18,68 @@ from tools.web import parse as prs
 import setting
 from setting import ACTIVE_ADVANCED_SEARCH_ENGINE
 
+# small functions
+def test_internet():
+    return wbf.tcping(wbf.cfg.ADDRESSINFO)[0]
 
+def google_login():
+    flag, account_name = wbfs.google_login()
+    if flag:
+        return [account_name, None]
+    else:
+        raise Exception("Google Login Failed")
+
+def wos_login():
+    sid, wossid = wbfs.wos_login()
+    if wossid:
+        return [None, wossid]
+    else:
+        raise Exception("WOS Login Failed")
+    
+def gss(text):
+    return wbfs.google_scholar_get(text)
+
+def woss(text, wossid):
+    kwd = [wbf.wos_keywords("topic", text, "AND")]
+    return wbf.wos_query_post(kwd, wossid)
+
+def cfs(text):
+    return wbf.crossref_get(text)
+
+def arxs(text):
+    return wbf.arxiv_get(text)
+
+def engine_search(text, wossid, idx):
+    if idx == 0:
+        return gss(text)
+    elif idx == 1:
+        return cfs(text)
+    elif idx == 2:
+        if not wossid:
+            raise Exception("WOS Token Not Found")
+        return woss(text, wossid)
+    elif idx == 3:
+        return arxs(text)
+    
+def engine_parse(response, idx):
+    if idx == 0:
+        return prs.google_scholar_parse(response)
+    elif idx == 1:
+        return prs.crossref_parse(response)
+    elif idx == 2:
+        return prs.wos_query_parse(response)
+    elif idx == 3:
+        return prs.arxiv_parse(response)
+
+# ----------------------------
 class AdvancedSearchZone(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.search_engine = 0 # TODO button group signal
+        self.search_engine = 0
+        self.wossid = None
+        self.google_account = None
+        self._metadata = None
         self.task_queue = TaskQueue(1)
 
         if ACTIVE_ADVANCED_SEARCH_ENGINE:
@@ -132,7 +189,6 @@ class AdvancedSearchZone(QWidget):
             radio_button.setStyleSheet(radio_button_style)
             self.button_group.addButton(radio_button)
             button_layout.addWidget(radio_button)
-        self.button_group.buttons()[0].setChecked(True)
         layout_2l.addLayout(button_layout)
 
         self.stacked_widget = QStackedWidget()
@@ -144,20 +200,27 @@ class AdvancedSearchZone(QWidget):
 
         # layout 2 right
         layout_2r = QVBoxLayout()
-        self.buff_listwidget = QListWidget()
+        self.buff_listwidget = DragListWidget(True, False)
         self.buff_listwidget.setFrameShape(QFrame.Panel)
         self.buff_listwidget.setFrameShadow(QFrame.Sunken)
         self.buff_listwidget.setLineWidth(2)
 
-        self.buff_label = QLabel("Search Results")
+        self.buff_label = DragCountLabel(True, False)
         self.buff_label.setFrameShape(QFrame.Panel)
         self.buff_label.setFrameShadow(QFrame.Sunken)
         self.buff_label.setLineWidth(2)
         self.buff_label.setAlignment(Qt.AlignCenter)
 
+        self.clear_list_button = QPushButton("Clear List")
+        self.clear_bucket_button = QPushButton("Clear Bucket")
+        self.import_button = QPushButton("Import Result")
+
         layout_2r.addWidget(self.buff_listwidget)
         layout_2r.addWidget(self.buff_label)
-        layout_2r.setStretch(0, 1)
+        layout_2r.addWidget(self.clear_list_button)
+        layout_2r.addWidget(self.clear_bucket_button)
+        layout_2r.addWidget(self.import_button)
+        layout_2r.setStretch(0, 3)
         layout_2r.setStretch(1, 1)
 
         layout_2.addLayout(layout_2r)
@@ -167,44 +230,53 @@ class AdvancedSearchZone(QWidget):
         layout.addLayout(layout_2)
 
         self.setLayout(layout)
-        # self.set_slots()
+        self.set_slots()
 
     def set_slots(self):
         self.button_group.buttonClicked.connect(self.set_engine)
         self.page_google.search_widget.search_signal.connect(self.action_start_search)
+        self.clear_list_button.clicked.connect(self.buff_listwidget.clear)
+        self.clear_bucket_button.clicked.connect(self.buff_label.clearMetaData)
+        # TODO self.import_button.clicked.connect(self.import_result)
 
     def set_taskqueue(self, task_queue: TaskQueue):
         self.task_queue = task_queue
 
     def action_test_internet(self):
-        accessability = wbf.tcping(wbf.cfg.ADDRESSINFO)[0]
-        self.set_status(accessability)
+        self.task_queue.add_task(
+            test_internet, 
+            (), 
+            callback=[self.set_status, self.action_error_display]
+        )
 
     def action_login_google(self):
-        def google_login():
-            flag, account_name = wbfs.google_login()
-            if flag:
-                self.set_accounts([account_name, None])
-        self.task_queue.add_task(google_login, ())
+        self.task_queue.add_task(
+            google_login, 
+            (), 
+            callback=[self.set_accounts, self.action_error_display]
+        )
 
     def action_login_wos(self):
-        def wos_login():
-            sid, wossid = wbfs.wos_login()
-            if wossid:
-                self.set_accounts([None, wossid])
-        self.task_queue.add_task(wos_login, ())
+        self.task_queue.add_task(
+            wos_login, 
+            (), 
+            callback=[self.set_accounts, self.action_error_display]
+        )
 
     def action_start_search(self, text):
         if not text:
             return
+        
+        search = lambda x: engine_search(x, self.wossid, self.search_engine)
+        parse = lambda x: self.action_parsing_search(x, self.search_engine)
         self.task_queue.add_task(
-            wbf.google_scholar_get,
+            search,
             params=(text,),
-            callback=[self.action_handle_search, self.action_error_display]
+            callback=[parse, self.action_error_display]
         )
 
-    def action_handle_search(self, response):
-        results = prs.google_scholar_parse(response)
+    def action_parsing_search(self, response, idx):
+        results = engine_parse(response, idx)
         self.page_google.set_search_results(results)
         print("handle search")
 
@@ -221,14 +293,23 @@ class AdvancedSearchZone(QWidget):
 
     def set_accounts(self, params):
         if params[0]:
+            self.google_account = params[0]
             self.google_account_label.setTexts("GOOGLE ACCOUNT", params[0], "purple")
         if params[1]:
+            self.wossid = params[1]
             self.wos_credentials_label.setTexts("WOS TOKEN", params[1], "purple")
 
     def set_engine(self, button):
         idx = self.button_group.buttons().index(button)
+        if idx == 2:
+            self.page_google.render_status("Error: WOS is not access now")
+            self.button_group.buttons()[0].setChecked(True)
+            self.search_engine = 0
+            raise Exception("WOS is not access now")
         print(f"Set Engine {idx}")
         self.search_engine = idx
+        from setting import set_cache
+        set_cache("search_engine", idx)
 
     def deleteLater(self):
         self.task_queue.stop_threads()

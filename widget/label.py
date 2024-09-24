@@ -1,5 +1,10 @@
 from PySide6.QtWidgets import QLabel, QFrame, QHBoxLayout, QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtGui import QDrag, QDragEnterEvent
+
+import json
+
+import utils.format as fmt
 
 
 class KVLabel(QWidget):
@@ -37,3 +42,34 @@ class KVLabel(QWidget):
         self.key_label.setText(key)
         self.value_label.setText(value)
         self.value_label.setStyleSheet(f"color: {status_color}; font-weight: bold;")
+
+
+class MetaLabel(QLabel):
+    def __init__(self, metadata=None, text=None):
+        if metadata and text is None:
+            text = fmt.format_metadata(metadata)
+        super().__init__(text)
+        self._metadata = metadata
+
+    def setMetaData(self, metadata=None, text=None):
+        self._metadata = metadata
+        if metadata and text is None:
+            text = fmt.format_metadata(metadata)
+        self.setText(text)
+
+
+class CountLabel(QLabel):
+    def __init__(self):
+        super().__init__()
+        self._metadatas = []
+        self.setText(f"Total: {len(self._metadatas)}")
+
+    def addMetaData(self, metadatas):
+        if not isinstance(metadatas, list):
+            metadatas = [metadatas]
+        self._metadatas.extend(metadatas)
+        self.setText(f"Total: {len(self._metadatas)}")
+
+    def clearMetaData(self):
+        self._metadatas.clear()
+        self.setText(f"Total: {len(self._metadatas)}")

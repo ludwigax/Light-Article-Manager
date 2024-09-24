@@ -81,7 +81,7 @@ class OnlineSearchZone(QWidget):
         formatted_string = f"""<p>----- <span style="color: green;">Article Metadata</span> -----</p>
 <p><span style="color: blue;">Title</span>: {metadata['title']}</p>
 <p><span style="color: blue;">Abstract</span>: {metadata['abstract']}</p>
-<p><span style="color: blue;">Authors</span>: {', '.join(metadata['authors'])}</p>
+<p><span style="color: blue;">Authors</span>: {metadata['authors']}</p>
 <p><span style="color: blue;">Published Year</span>: {metadata['year']}</p>
 <p><span style="color: blue;">Journal</span>: {metadata['journal']}</p>
 <p><span style="color: blue;">DOI</span>: {metadata['doi']}</p>

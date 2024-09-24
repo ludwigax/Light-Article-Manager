@@ -8,6 +8,7 @@ bad sidebar layout
 √ drag pdf and save
 high quality search and RAG
 √ online multi thread
+√ advance online search
 √ add note in a edit board
 √ tool bar with beauty button
 √ online thread bug
@@ -15,4 +16,4 @@ mark and tag for article
 filter for view
 bounce up setting choice
 new function for renew database information
-togle choice in start menu
+√ togle choice in start menu

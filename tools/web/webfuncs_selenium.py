@@ -93,8 +93,8 @@ def google_login():
 def wos_login():
     init_driver()
     driver.minimize_window()
-    
     driver.get(cfg.WOS_HM_URL)
+    time.sleep(5)
     
     try:
         element_present = EC.presence_of_element_located((By.XPATH, "/html/body/app-wos/main/div/div/div[1]/app-header/div[1]/header/div[2]/div[1]/a"))

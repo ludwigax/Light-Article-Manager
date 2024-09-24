@@ -201,3 +201,24 @@ def progressbar(percentage: int) -> str:
     elif restblock==3:
         partblock = "▍"
     return f'{fullblock}{partblock}'
+
+
+# temp function
+def format_metadata(data):
+    rich_text = '<p>----- <span style="color: green;">Article Metadata</span> -----</p>'
+    if data.get('title'):
+        rich_text += f'<p><span style="color: blue;">Title</span>: {data["title"]}</p>'
+    if data.get('abstract'):
+        rich_text += f'<p><span style="color: blue;">Abstract</span>: {data["abstract"]}</p>'
+    if data.get('authors'):
+        rich_text += f'<p><span style="color: blue;">Authors</span>: {data["authors"]}</p>'
+    if data.get('year'):
+        rich_text += f'<p><span style="color: blue;">Published Year</span>: {data["year"]}</p>'
+    if data.get('journal'):
+        rich_text += f'<p><span style="color: blue;">Journal</span>: {data["journal"]}</p>'
+    if data.get('doi'):
+        rich_text += f'<p><span style="color: blue;">DOI</span>: {data["doi"]}</p>'
+    if data.get('keywords'):
+        rich_text += f'<p><span style="color: blue;">Keywords</span>: {data["keywords"]}</p>'
+    rich_text += '<p>------------------------</p>'
+    return rich_text

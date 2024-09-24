@@ -1,7 +1,56 @@
+from PySide6.QtWidgets import QLabel, QListWidgetItem, QListWidget, QApplication
+from PySide6.QtCore import Qt, QMimeData, QPoint
+from PySide6.QtGui import QDrag, QDragEnterEvent
+
+from widget.label import MetaLabel, CountLabel
+
 import json
-from PySide6.QtWidgets import QApplication, QListWidgetItem, QVBoxLayout, QWidget, QListWidget
-from PySide6.QtCore import QMimeData, Qt, QPoint
-from PySide6.QtGui import QDrag
+
+
+class DragLabel(MetaLabel):
+    def __init__(self, drop_in = True, drag_out = True):
+        super().__init__(None, "<p>-- Search Results --</p>")
+        self.setAcceptDrops(drop_in)
+        self.drop_in = drop_in
+        self.drag_out = drag_out
+
+    def mousePressEvent(self, event):
+        if self.drag_out and event.button() == Qt.LeftButton:
+            if not self._metadata:
+                return
+            mime_data = QMimeData()
+            bytes = json.dumps(self._metadata).encode()
+            mime_data.setData("application/octet-stream", bytes)
+            drag = QDrag(self)
+            drag.setMimeData(mime_data)
+            drag.exec(Qt.CopyAction | Qt.MoveAction)
+
+    def dragEnterEvent(self, event):
+        if self.drop_in and event.mimeData().hasFormat("application/octet-stream"):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if self.drop_in and event.mimeData().hasFormat("application/octet-stream"):
+            label_data = event.mimeData().data("application/octet-stream")
+            self.setMetaData(json.loads(label_data.data().decode()))
+            event.acceptProposedAction()
+
+
+class DragCountLabel(CountLabel):
+    def __init__(self, drop_in = True, drag_out = False):
+        super().__init__()
+        self.setAcceptDrops(drop_in)
+        self.drop_in = drop_in
+
+    def dragEnterEvent(self, event):
+        if self.drop_in and event.mimeData().hasFormat("application/octet-stream"):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if self.drop_in and event.mimeData().hasFormat("application/octet-stream"):
+            label_data = event.mimeData().data("application/octet-stream")
+            self.addMetaData(json.loads(label_data.data().decode()))
+            event.acceptProposedAction()
 
 
 class MetaItem(QListWidgetItem):
@@ -23,15 +72,16 @@ class DragListWidget(QListWidget):
         self.dragging = True
         self.start_point = QPoint()
         self.drag_out = drag_out
+        self.drop_in = drop_in
         self.setAcceptDrops(drop_in)
         self.setDropIndicatorShown(True)
 
     def dragEnterEvent(self, event):
-        if self.drag_out and event.mimeData().hasFormat("application/octet-stream"):
+        if self.drop_in and event.mimeData().hasFormat("application/octet-stream"):
             event.acceptProposedAction()
 
     def dragMoveEvent(self, event):
-        if self.drag_out and event.mimeData().hasFormat("application/octet-stream"):
+        if self.drop_in and event.mimeData().hasFormat("application/octet-stream"):
             event.acceptProposedAction()
 
     def dropEvent(self, event):
@@ -70,37 +120,4 @@ class DragListWidget(QListWidget):
     def mouseReleaseEvent(self, event):
         self.dragging = False
         super().mouseReleaseEvent(event)
-        
 
-
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        layout = QVBoxLayout(self)
-
-        # 创建两个 DragListWidget 实例
-        self.list_widget_1 = DragListWidget(True, True)
-        self.list_widget_2 = DragListWidget(True, True)
-
-        # 添加项目到第一个列表
-        meta_data_1 = {"title": "Item 1"}
-        meta_data_2 = {"title": "Item 2"}
-        self.list_widget_1.addItem(MetaItem(meta_data_1))
-        self.list_widget_1.addItem(MetaItem(meta_data_2))
-
-        # 添加项目到第二个列表
-        meta_data_3 = {"title": "Item 3"}
-        meta_data_4 = {"title": "Item 4"}
-        self.list_widget_2.addItem(MetaItem(meta_data_3))
-        self.list_widget_2.addItem(MetaItem(meta_data_4))
-
-        layout.addWidget(self.list_widget_1)
-        layout.addWidget(self.list_widget_2)
-        self.setLayout(layout)
-
-
-if __name__ == "__main__":
-    app = QApplication([])
-    window = MainWindow()
-    window.show()
-    app.exec()

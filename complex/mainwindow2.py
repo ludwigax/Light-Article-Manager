@@ -81,6 +81,11 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.task_queue = utils.thread.TaskQueue(1)
         self.zone_onlinesearch.set_taskqueue(self.task_queue)
         self.zone_advancedsearch.set_taskqueue(self.task_queue)
+        self.zone_advancedsearch.action_test_internet()
+
+        from setting import SEARCH_ENGINE_PREFER
+        self.zone_advancedsearch.button_group.buttons()[SEARCH_ENGINE_PREFER].setChecked(True)
+        self.zone_advancedsearch.search_engine = SEARCH_ENGINE_PREFER
 
         self.widgets = {
             "mvm": self.zone_moduleview.mvm,
@@ -132,6 +137,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
 
         self._setupMenuAction()
         self._setupSlots()
+        self._always_test()
 
         self.loadPerspective()
 
@@ -140,6 +146,17 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.actionImport_batch.triggered.connect(self.onImportBatchClicked)
         self.actionImport_manually.triggered.connect(self.onManualClicked)
         self.actionSave_layout.triggered.connect(self.onSaveLayoutClicked)
+
+        self.menuRecover_layout.addAction(self.dock_widgets["main"].toggleViewAction())
+        self.menuRecover_layout.addAction(self.dock_widgets["note"].toggleViewAction())
+        self.menuRecover_layout.addAction(self.dock_widgets["note_edit"].toggleViewAction())
+        self.menuRecover_layout.addAction(self.dock_widgets["online_search"].toggleViewAction())
+        self.menuRecover_layout.addAction(self.dock_widgets["advanced_search"].toggleViewAction())
+
+        # self.actionNote_Browser.triggered.connect
+        # self.actionNote_View.triggered.connect
+        # self.actionAdvanced_Search.triggered.connect
+        # self.actionOnline_Search.triggered.connect
         # self.actionSave_layout.triggered.connect(self.onOnlineSearch) # just for test
         # Another action TODO
         # self.actionLoad_Library
@@ -150,6 +167,14 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         emitter.open_pdf_internal.connect(self.onOpenArticlePDF)
         emitter.change_editor_mode.connect(self.changeEditMode)
         # self.zone_onlinesearch.import_signal.connect(self.onOnlineSearchImport) TODO
+
+    def _always_test(self):
+        pass
+        # import time
+        # tic = time.time()
+        # self.zone_advancedsearch.set_accounts(["fuckyour mother", None])
+        # self.zone_advancedsearch.set_accounts([None, "well good"])
+        # print(time.time() - tic)
 
 
     # --------------------------------------------------------------------------------
@@ -255,11 +280,11 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
             self.dock_widgets["note_edit"].setWindowTitle("Note Browser *")
 
     def savePerspective(self):
-        with open("layout.xml", "wb") as f:
+        with open("./cache/layout.xml", "wb") as f:
             f.write(self.dock_manager.saveState())
 
     def loadPerspective(self):
-        with open("layout.xml", "rb") as f:
+        with open("./cache/layout.xml", "rb") as f:
             self.dock_manager.restoreState(f.read())
 
     def closeEvent(self, event):

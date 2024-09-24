@@ -66,7 +66,7 @@ def google_scholar_get(kwd: str):
     return response
 
 def crossref_get(title, doi=None):
-    params = {"query.title": title, "rows": 1}
+    params = {"query.title": title, "rows": 20}
     if doi:
         params["query.doi"] = doi
 
@@ -90,7 +90,7 @@ def wos_query_post(query_list: List[Dict[str, str]], sid: str):
     response = requests.post(query_url, headers=query_header, data=query_body, params=params)
     return response
     
-def wos_stream_post(first: int, qid: str, sid: str):
+def wos_stream_post(first: int, qid: str, sid: str): # TODO what api keys?
     stream_body_js = json.loads(cfg.WOS_STREAM_BODY)
     stream_body_js["qid"] = qid
     stream_body_js["retrieve"]["first"] = str(first)
@@ -122,7 +122,14 @@ def wos_fullrecord_post(wos_uid: str, qid: str, sid: str):
     response = requests.post(fullrec_url, headers=fullrec_header, data=fullrec_body, params=params)
     return response
 
-
-def wos_test_get():
-    response = requests.get(cfg.WOS_HM_URL)
+def arxiv_get(query, max_results=15):
+    params = {
+        'search_query': f'all:{query}',
+        'start': 0,
+        'max_results': max_results
+    }
+    
+    response = requests.get('http://export.arxiv.org/api/query', params=params)
+    if response.status_code != 200:
+        raise Exception(f"Status code: {response.status_code}")
     return response

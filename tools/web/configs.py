@@ -8,6 +8,7 @@ WOS_HM_URL = "https://webofscience.clarivate.cn/wos/alldb/basic-search"
 WOS_API_URL = "https://webofscience.clarivate.cn/api/wosnx/core"
 
 ARXIV_URL = "https://arxiv.org"
+ARXIV_API_URL = "https://export.arxiv.org/api/query"
 
 WOS_API_NAME = {
     "query": "runQuerySearch",

@@ -22,7 +22,7 @@ class NetworkThread(QThread):
 
     def singel_task(self):
         func, params, callback = self.task_queue.get()
-        print(f"Task: {func.__name__}, {params}\n With Callback: {callback}")
+        print(f"Task: {func.__name__}, {params}\n With Callback: {[callback[0].__name__, callback[1].__name__]}")
         if func is None:
             return 0
         if not callback:
@@ -36,6 +36,7 @@ class NetworkThread(QThread):
             response = func(*params)
             self.finished_signal.emit(response)
         except Exception as e:
+            
             self.error_signal.emit(str(e))
             pass
         finally:
