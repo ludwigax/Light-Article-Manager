@@ -44,7 +44,7 @@ class OnlineSearchZone(QWidget):
     def _setupSlots(self):
         self.search_widget.search_signal.connect(self.google_search)
         self.list_widget.itemClicked.connect(self.crossref_search)
-        self.import_button.clicked.connect(self.import_selection)
+        self.import_button.clicked.connect(self.import_result)
 
     def set_taskqueue(self, task_queue: TaskQueue):
         self.task_queue = task_queue
@@ -97,12 +97,12 @@ class OnlineSearchZone(QWidget):
         self.is_working = False
         self.result_label.setText(f"<p><span style='color: red;'>Error</span>: {error}</p>")
 
-    def import_selection(self):
+    def import_result(self):
         if not self._metadata:
             self.import_button.setEnabled(False)
             return
         
-        emitter.import_online.emit(self._metadata)
+        emitter.import_internet.emit(self._metadata)
         self.import_button.setEnabled(False)
         self._metadata = None
 

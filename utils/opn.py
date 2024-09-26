@@ -10,6 +10,8 @@ from sqlalchemy import asc, inspect
 from database import Article, Keyword, Note, Annotation
 from sylva import ArticleData, NoteData, AnnotationData, Sylva
 
+from tools.pdf import pdformat
+
 from func import global_session, global_sylva
 import datetime
 
@@ -175,10 +177,10 @@ def delete_article(article_id):
 def cascade_delete_article(article_id):
     session = global_session()
     article = session.query(Article).filter(Article.id == article_id).one_or_none()
-    if not article:
-        return
-    session.delete(article)
-    session.commit()
+    if article:
+        session.delete(article)
+        session.commit()
+
 
 def delete_note(note_id):
     session = global_session()
@@ -271,3 +273,47 @@ def matches_pattern(text: str, pattern: str) -> List[Tuple[int, int]]:
         start, end = mat.span()
         matches.append((start, end))
     return matches
+
+
+# --------------------------------------------------------------------------------
+# advanced operations
+from tools.span import span_subprocess
+
+import func
+import pickle as pkl
+def write_vector_base(vector_base: dict):
+    with open(func.vector_base_path, "wb") as f:
+        pkl.dump(vector_base, f)
+
+def read_vector_base():
+    with open(func.vector_base_path, "rb") as f:
+        vector_base = pkl.load(f)
+    return vector_base
+
+def get_article_raw_text(article: Article | int):
+    if isinstance(article, int):
+        article = get_article(article)
+    if article.local_path is None:
+        return []
+    text = pdformat.easy_use(get_absolute_path(article.local_path))
+    return text
+
+def get_embedding_from_sentence(sentence: List[str] | str):
+    variables = {
+        "sentence": sentence,
+        "model_name": "BAAI/bge-m3",
+        "batch_size": 100,
+        "use_fp16": True
+    }
+    command = "./tools/emb/external.bat"
+    variables = span_subprocess(variables, [command, "embed"])
+    return variables["vector_dict"]["dense_vecs"]
+
+def get_scores_from_similarity(query: str, vectors):
+    variables = {
+        "query": query,
+        "vector_base": vectors,
+    }
+    command = "./tools/emb/external.bat"
+    variables = span_subprocess(variables, [command, "similarity"])
+    return variables["scores"]

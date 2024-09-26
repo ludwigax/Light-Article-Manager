@@ -49,7 +49,7 @@ def modify_article(index, article_id, data):
     return True
 
 def delete_article(index, article_id):
-    opn.delete_article(article_id)
+    opn.cascade_delete_article(article_id)
     opn.delete_folder_article_by_id(article_id)
     if stg.ACTIVE_REFRESHING_VIEW:
         emitter.delete_article.emit(index)
@@ -133,3 +133,55 @@ def delete_note(index, note_id):
         emitter.delete_note.emit(index)
         emitter.render_note_editor.emit(note_id)
     return True
+
+import numpy as np
+
+def sync_all(): # TODO
+    pass
+
+def rebuild_vector_base():
+    articles = opn.get_all_articles()
+    id_list = []
+    text_list = []
+    count_list = []
+    for article in articles:
+        try:
+            text = opn.get_article_raw_text(article)
+            text = [t.strip() for t in text if t.strip()]
+        except:
+            text = []
+
+        if len(text) >= 200:
+            continue
+        id_list.append(article.id)
+        text_list.append(text)
+        count_list.append(len(text))
+
+    id_list = np.array(id_list)
+    count_list = np.array(count_list)
+    ids = np.repeat(id_list, count_list)
+    texts = []
+    for text in text_list:
+        texts.extend(text)
+    vectors = opn.get_embedding_from_sentence(texts)
+    vector_base = {
+        "_id": ids,
+        "_text": texts,
+        "_vector": vectors
+    }
+    opn.write_vector_base(vector_base)
+
+def reindex_vector_base():
+    raise NotImplementedError
+
+def search_vector_base(query):
+    vector_base = opn.read_vector_base()
+
+    query_vector = opn.get_embedding_from_sentence([query])
+    scores = opn.get_scores_from_similarity(query_vector, vector_base["_vector"])
+    indices_top = np.argsort(scores)[-100:][::-1]
+    texts = vector_base["_text"]
+    return (scores[indices_top], 
+            vector_base["_id"][indices_top], 
+            [texts[i] for i in indices_top])
+

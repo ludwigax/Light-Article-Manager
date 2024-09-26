@@ -1,0 +1,42 @@
+id,title,note,add_time,changed_time,quote,torder,article_id
+1,0912-notes,"<!DOCTYPE HTML PUBLIC ""-//W3C//DTD HTML 4.0//EN"" ""http://www.w3.org/TR/REC-html40/strict.dtd"">
+<html><head><meta name=""qrichtext"" content=""1"" /><meta charset=""utf-8"" /><style type=""text/css"">
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: ""\2610""; }
+li.checked::marker { content: ""\2612""; }
+</style></head><body style="" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;"">
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">max-min(FPS)法构建 尽可能覆盖变量空间的实验</p>
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">对空间作choleski正交变换，降低非正交化的分布影响</p>
+<p style=""-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;""><br /></p>
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">求梯度是否能可视化影响？</p></body></html>",2024-09-12,2024-09-12,,,85
+2,0912-notes,"<!DOCTYPE HTML PUBLIC ""-//W3C//DTD HTML 4.0//EN"" ""http://www.w3.org/TR/REC-html40/strict.dtd"">
+<html><head><meta name=""qrichtext"" content=""1"" /><meta charset=""utf-8"" /><style type=""text/css"">
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: ""\2610""; }
+li.checked::marker { content: ""\2612""; }
+</style></head><body style="" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;"">
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">随机投影 + PCA（投影平衡）</p>
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">Johnson-Lindestrauss 引理</p>
+<p style=""-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;""><br /></p>
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">不考虑方差影响（数据存在放缩）,使用随机投影的伪正交变换是否能够增加采样效果？</p></body></html>",2024-09-12,2024-09-12,,,86
+3,0912-notes,"<!DOCTYPE HTML PUBLIC ""-//W3C//DTD HTML 4.0//EN"" ""http://www.w3.org/TR/REC-html40/strict.dtd"">
+<html><head><meta name=""qrichtext"" content=""1"" /><meta charset=""utf-8"" /><style type=""text/css"">
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: ""\2610""; }
+li.checked::marker { content: ""\2612""; }
+</style></head><body style="" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;"">
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">1) maxmin; 2) sphere-exclude; 3) optsim; 4) clique-processed</p></body></html>",2024-09-12,2024-09-12,,,88
+4,0913-notes,"<!DOCTYPE HTML PUBLIC ""-//W3C//DTD HTML 4.0//EN"" ""http://www.w3.org/TR/REC-html40/strict.dtd"">
+<html><head><meta name=""qrichtext"" content=""1"" /><meta charset=""utf-8"" /><style type=""text/css"">
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: ""\2610""; }
+li.checked::marker { content: ""\2612""; }
+</style></head><body style="" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;"">
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">ref 27: 构造样本代表性指数，选取显著性更高的样本进行采样</p>
+<p style=""-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;""><br /></p>
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">ref 42: sample bias，一直想找一篇讨论sample bias的文献</p>
+<p style="" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"">ref 44: covariate shift</p></body></html>",2024-09-13,2024-09-13,,,90

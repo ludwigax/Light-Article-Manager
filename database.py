@@ -1,9 +1,11 @@
-from sqlalchemy import create_engine, text, \
+from sqlalchemy import create_engine, text, MetaData, \
     Column, Integer, String, ForeignKey, JSON, Table, inspect
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 
 import os
+import csv
 from typing import List
+    
 
 Base = declarative_base()
 
@@ -12,11 +14,16 @@ article_keyword = Table(
     Column('article_id', Integer, ForeignKey('articles.id'), primary_key=True),
     Column('keyword_id', Integer, ForeignKey('keywords.id'), primary_key=True),
 )
+article_tag = Table(
+    'article_tag', Base.metadata,
+    Column('article_id', Integer, ForeignKey('articles.id'), primary_key=True),
+    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True),
+)
 
 class Article(Base):
     r"""
     Article Structure:
-
+    
     - `title`: Title of the article
     - `author`: Author(s) of the article
     - `journal`: Journal where the article was published
@@ -32,11 +39,12 @@ class Article(Base):
     author = Column(String)
     journal = Column(String)
     year = Column(String)
-    abstract = Column(String) # TODO
     doi = Column(String)
     local_path = Column(String)
     add_time = Column(String)
+    abstract = Column(String) # TODO
     keywords = relationship("Keyword",secondary=article_keyword, back_populates="articles")
+    tags = relationship("Tag", secondary=article_tag, back_populates="articles")
     notes = relationship("Note", back_populates="article", cascade="all, delete-orphan")
     annotations = relationship("Annotation", back_populates="article", cascade="all, delete-orphan")
 
@@ -67,6 +75,21 @@ class Keyword(Base):
     word = Column(String)
     count = Column(Integer, default=0)
     articles = relationship("Article", secondary=article_keyword, back_populates="keywords")
+
+class Tag(Base):
+    r"""
+    Tag Structure:
+
+    - `tag`: The tag
+    - `count`: Number of articles containing this tag
+    """
+
+    __tablename__ = 'tags'
+
+    id = Column(Integer, primary_key=True)
+    tag = Column(String)
+    color = Column(String)
+    articles = relationship("Article", secondary=article_tag, back_populates="tags")
 
 class Note(Base):
     r"""
@@ -109,10 +132,10 @@ class Annotation(Base):
     id = Column(Integer, primary_key=True)
     annot = Column(String)
     refer = Column(String)
+    color = Column(String)
     page_number = Column(Integer)
     add_time = Column(String)
     changed_time = Column(String)
-    colour = Column(String)
     torder = Column(Integer) # needed?
     article_id = Column(Integer, ForeignKey('articles.id'))
     article = relationship("Article", back_populates="annotations")
@@ -123,10 +146,7 @@ def create_database():
         engine = create_engine('sqlite:///repository.db')
         Base.metadata.create_all(engine)
 
-def export_articles(db_path: str, output_path: str = 'articles.csv'): # TODO
-    import csv
-    from sqlalchemy import create_engine, MetaData, Table
-
+def export_articles(db_path: str): # TODO
     engine = create_engine('sqlite:///' + db_path)
     metadata = MetaData()
     articles_table = Table('articles', metadata, autoload_with=engine)
@@ -134,30 +154,50 @@ def export_articles(db_path: str, output_path: str = 'articles.csv'): # TODO
     with engine.connect() as conn:
         result = conn.execute(articles_table.select())
         articles_data = result.fetchall()
+        columns_name = result.keys()
 
-    with open(output_path, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['id', 'title', 'author', 'journal', 'year', 'doi', 'local_path', 'add_time'])
-        for row in articles_data:
-            writer.writerow(row)
+    def row_to_dict(table_name, columns, data):
+        with open(f"{table_name}.csv", mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(columns)
+            for row in data:
+                writer.writerow(row)
+
+    for table_name in ["articles", "notes"]:
+        table = Table(table_name, metadata, autoload_with=engine)
+        with engine.connect() as conn:
+            result = conn.execute(table.select())
+            data = result.fetchall()
+            columns = result.keys()
+            row_to_dict(table_name, columns, data)
+
     print("success export articles.csv")
 
-def import_articles(db_path: str, input_path: str = 'articles.csv'):
-    import csv
-    from sqlalchemy import create_engine, MetaData, Table
-
+def import_articles(db_path: str):
     engine = create_engine('sqlite:///' + db_path)
-    metadata = MetaData()
-    articles_table = Table('articles', metadata, autoload_with=engine)
 
-    columns = [column.name for column in articles_table.columns]
-
-    with open('articles.csv', mode='r', newline='', encoding='utf-8') as file:
+    session = sessionmaker(bind=engine)()
+    with open('articles.csv', mode='r', newline='', encoding='utf-8') as file: 
         reader = csv.DictReader(file)
-        with engine.connect() as conn:
-            for row in reader:
-                data = {column: row.get(column, '') for column in columns}
-                conn.execute(articles_table.insert().values(data))
+        for row in reader:
+            for k, v in row.items():
+                if not v:
+                    row[k] = None
+            row['id'] = int(row['id'])
+            article = Article(**row)
+            session.add(article)
+        session.commit()
+
+    with open('notes.csv', mode='r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            for k, v in row.items():
+                if not v:
+                    row[k] = None
+            row['id'] = int(row['id'])
+            note = Note(**row)
+            session.add(note)
+        session.commit()
     print("success import articles.csv")
 
 create_database()

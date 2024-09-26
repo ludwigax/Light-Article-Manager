@@ -47,7 +47,7 @@ def google_scholar_parse(response, limit=20):
 
         data = {
             'title': title,
-            'authors': authors,
+            'author': authors,
             'page_url': page_url,
             'abstract': abstract,
         }
@@ -87,7 +87,7 @@ def crossref_parse(response):
         
         data = {
             'title': article_title,
-            'authors': authors,
+            'author': authors,
             'journal': journal,
             'year': year,
             'doi': doi,
@@ -159,7 +159,7 @@ def wos_fullrec_parse(response):
 
     return {
         "title": title,
-        "authors": authors,
+        "author": authors,
         "journal": journal,
         "year": year,
         "doi": doi,
@@ -183,7 +183,7 @@ def arxiv_parse(response):
 
         data = {
             'title': title,
-            'authors': authors,
+            'author': authors,
             'journal': journal,
             'year': year,
             'doi': doi,

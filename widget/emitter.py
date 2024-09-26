@@ -20,7 +20,7 @@ class Emitter(QObject):
 
     open_pdf_internal = Signal()
     change_editor_mode = Signal(int)
-    import_online = Signal(object)
+    import_internet = Signal(object)
 
     new_article = Signal(object, NamedDict)
     modify_article = Signal(object, NamedDict)

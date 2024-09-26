@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QLabel, QFrame, QHBoxLayout, QWidget
-from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtCore import Qt, QMimeData, Signal
 from PySide6.QtGui import QDrag, QDragEnterEvent
 
 import json
@@ -59,6 +59,7 @@ class MetaLabel(QLabel):
 
 
 class CountLabel(QLabel):
+    _metadats_changed = Signal(bool)
     def __init__(self):
         super().__init__()
         self._metadatas = []
@@ -68,8 +69,10 @@ class CountLabel(QLabel):
         if not isinstance(metadatas, list):
             metadatas = [metadatas]
         self._metadatas.extend(metadatas)
+        self._metadats_changed.emit(True)
         self.setText(f"Total: {len(self._metadatas)}")
 
     def clearMetaData(self):
         self._metadatas.clear()
+        self._metadats_changed.emit(False)
         self.setText(f"Total: {len(self._metadatas)}")

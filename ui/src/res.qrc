@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="icons">
+    <file>rebuild.png</file>
+    <file>reindex.png</file>
+    <file>sync.png</file>
     <file>post-it.png</file>
     <file>synchron_blue.png</file>
     <file>synchron_red.png</file>

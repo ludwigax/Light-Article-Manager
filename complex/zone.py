@@ -111,14 +111,14 @@ class MainBrowserZone(QWidget):
         
         self.toolbar = QToolBar("Toolbar", self)
         self.add_note_button = StyleButton(self, "PURPLE")
-        self.add_note_button.setText("Add Note")
+        self.add_note_button.setText("New Note")
         self.add_note_button.clicked.connect(self.action_add_note)
 
         self.drag_button = PDFDropButton(self)
         self.drag_button.init_data(None, None)
 
         self.sync_button = StyleButton(self, "RED")
-        self.sync_button.setText("Sync All")
+        self.sync_button.setText("Sync Data")
         self.sync_button.clicked.connect(self._sync_all)
 
         self.toolbar.addWidget(self.add_note_button)

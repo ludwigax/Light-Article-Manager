@@ -18,6 +18,9 @@ session = Session()
 sylva = Sylva()
 sylva.load()
 
+vector_base_path = "./vector_base.pkl"
+vector_base_field = ["_idx", "_text", "_vector"]
+
 def global_session() -> sqlalchemy.orm.session.Session:
     return session
 

@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QListWidget, \
     QLabel, QMessageBox, QToolBar, QStackedWidget, QRadioButton, QButtonGroup, QFrame, \
     QPushButton
@@ -7,6 +7,7 @@ from widget.button import StyleButton
 from widget.label import KVLabel
 from widget.search import SearchWidget
 from widget.drag import DragCountLabel, DragListWidget, MetaItem
+from widget.emitter import emitter
 
 from complex.easy_search import EasySearchZone
 
@@ -79,7 +80,6 @@ class AdvancedSearchZone(QWidget):
         self.search_engine = 0
         self.wossid = None
         self.google_account = None
-        self._metadata = None
         self.task_queue = TaskQueue(1)
 
         if ACTIVE_ADVANCED_SEARCH_ENGINE:
@@ -214,6 +214,7 @@ class AdvancedSearchZone(QWidget):
         self.clear_list_button = QPushButton("Clear List")
         self.clear_bucket_button = QPushButton("Clear Bucket")
         self.import_button = QPushButton("Import Result")
+        self.import_button.setEnabled(False)
 
         layout_2r.addWidget(self.buff_listwidget)
         layout_2r.addWidget(self.buff_label)
@@ -237,7 +238,8 @@ class AdvancedSearchZone(QWidget):
         self.page_google.search_widget.search_signal.connect(self.action_start_search)
         self.clear_list_button.clicked.connect(self.buff_listwidget.clear)
         self.clear_bucket_button.clicked.connect(self.buff_label.clearMetaData)
-        # TODO self.import_button.clicked.connect(self.import_result)
+        self.import_button.clicked.connect(self.import_result)
+        self.buff_label._metadats_changed.connect(self.import_button.setEnabled)
 
     def set_taskqueue(self, task_queue: TaskQueue):
         self.task_queue = task_queue
@@ -310,6 +312,16 @@ class AdvancedSearchZone(QWidget):
         self.search_engine = idx
         from setting import set_cache
         set_cache("search_engine", idx)
+
+    def import_result(self):
+        if not self.buff_label._metadatas:
+            self.import_button.setEnabled(False)
+            return
+        
+        for metadata in self.buff_label._metadatas:
+            emitter.import_internet.emit(metadata)
+        self.import_button.setEnabled(False)
+        self.buff_label.clearMetaData()
 
     def deleteLater(self):
         self.task_queue.stop_threads()

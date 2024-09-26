@@ -5,8 +5,8 @@ from typing import List, Tuple
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog,\
     QMessageBox, QDialog, QTextBrowser, QListWidget, QTextEdit, QTreeWidgetItem, QInputDialog,\
     QToolBar, QSizePolicy
-from PySide6.QtCore import Qt, Signal, QByteArray, QSignalBlocker
-from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, Signal, QByteArray, QSignalBlocker, QSize
+from PySide6.QtGui import QAction, QIcon
 
 import PySide6QtAds as QtAds
 
@@ -20,6 +20,7 @@ from widget.text import EditableTextEdit
 from complex.zone import ModuleViewZone, MainBrowserZone, NoteViewZone, NoteEditZone, PDFViewerZone
 from complex.online_search import OnlineSearchZone
 from complex.advanced_search import AdvancedSearchZone
+from complex.semantic_search import SemanticSearchZone
 
 from crawler import DownloadWorker
 
@@ -38,7 +39,7 @@ import utils.combo as cb
 from mvc.module import NestedModule, NonNestedModule
 from mvc.notem import NoteModule
 
-from tools.pdf import extract_annotations
+from tools.pdf.pdf import extract_annotations
 import tools.ref as ref
 
 import markdown2
@@ -60,6 +61,15 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.download_id = None
         # self.log = [] # TODO
 
+        self.toolbar = QToolBar("Main Toolbar")
+        self.addToolBar(self.toolbar)
+
+        action = QAction(QIcon(":icons/sync.png"), "Sync All", self)
+        self.toolbar.addAction(action)
+        self.toolbar.addAction(QAction(QIcon(":icons/rebuild.png"), "Build Vector", self))
+        self.toolbar.addAction(QAction(QIcon(":icons/reindex.png"), "Reindex", self))
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
         QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.OpaqueSplitterResize, True)
         QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.XmlCompressionEnabled, False)
         QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.FocusHighlighting, True)
@@ -77,6 +87,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.zone_noteedit = NoteEditZone(self)
         self.zone_onlinesearch = OnlineSearchZone(self)
         self.zone_advancedsearch = AdvancedSearchZone(self)
+        self.zone_semanticsearch = SemanticSearchZone(self)
 
         self.task_queue = utils.thread.TaskQueue(1)
         self.zone_onlinesearch.set_taskqueue(self.task_queue)
@@ -126,6 +137,10 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         dock6.setWidget(self.zone_advancedsearch)
         area6 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.LeftDockWidgetArea, dock6)
 
+        dock7 = QtAds.CDockWidget("Semantic Search", self)
+        dock7.setWidget(self.zone_semanticsearch)
+        area7 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.LeftDockWidgetArea, dock7)
+
         self.dock_widgets = {
             "module": dock1,
             "main": dock2,
@@ -133,6 +148,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
             "note_edit": dock4,
             "online_search": dock5,
             "advanced_search": dock6,
+            "semantic_search": dock7,
         }
 
         self._setupMenuAction()
@@ -152,6 +168,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.menuRecover_layout.addAction(self.dock_widgets["note_edit"].toggleViewAction())
         self.menuRecover_layout.addAction(self.dock_widgets["online_search"].toggleViewAction())
         self.menuRecover_layout.addAction(self.dock_widgets["advanced_search"].toggleViewAction())
+        self.menuRecover_layout.addAction(self.dock_widgets["semantic_search"].toggleViewAction())
 
         # self.actionNote_Browser.triggered.connect
         # self.actionNote_View.triggered.connect
@@ -166,6 +183,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
     def _setupSlots(self):
         emitter.open_pdf_internal.connect(self.onOpenArticlePDF)
         emitter.change_editor_mode.connect(self.changeEditMode)
+        emitter.import_internet.connect(self.onOnlineSearchImport)
         # self.zone_onlinesearch.import_signal.connect(self.onOnlineSearchImport) TODO
 
     def _always_test(self):
@@ -245,21 +263,8 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
             self.pdf_area = None
 
     def onOnlineSearchImport(self, result: dict):
-        data = {
-            "title": result['title'],
-            "author": " and ".join(result['authors']),
-            "journal": result['journal'],
-            "year": result['published_year'],
-            "doi": result['doi'],
-            "add_time": datetime.datetime.now().strftime("%Y-%m-%d"),
-            "abstract": result['abstract'],
-        }
-        if data["doi"] == "No DOI available":
-            data["doi"] = None
-        if data["abstract"] == "No abstract available":
-            data["abstract"] = None
-        data = ArticleData(**data)
-        self.importArticle(data)
+        result["add_time"] = opn.get_time()
+        self.importArticle(ArticleData(**result))
 
 
     # --------------------------------------------------------------------------------
