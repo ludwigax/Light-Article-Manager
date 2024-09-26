@@ -4,6 +4,9 @@ I’d like to construct a manager with an auto RAG system enhanced by a local LL
 
 Right now, it feels more like an exercise in Qt UI. :(
 
+
+#### Update 2024-09-27
+
 I have updated this project with some additional features, making it more interactive. It now supports simple literature management, including a tree view, and allows viewing and modifying the corresponding literature metadata.
 ![Main Page.](./test2.PNG)
 
