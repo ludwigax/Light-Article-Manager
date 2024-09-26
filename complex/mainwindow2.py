@@ -21,6 +21,7 @@ from complex.zone import ModuleViewZone, MainBrowserZone, NoteViewZone, NoteEdit
 from complex.online_search import OnlineSearchZone
 from complex.advanced_search import AdvancedSearchZone
 from complex.semantic_search import SemanticSearchZone
+from complex.test_llama import TestLLamaZone
 
 from crawler import DownloadWorker
 
@@ -89,6 +90,8 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.zone_advancedsearch = AdvancedSearchZone(self)
         self.zone_semanticsearch = SemanticSearchZone(self)
 
+        self.zone_testllama = TestLLamaZone(self)
+
         self.task_queue = utils.thread.TaskQueue(1)
         self.zone_onlinesearch.set_taskqueue(self.task_queue)
         self.zone_advancedsearch.set_taskqueue(self.task_queue)
@@ -141,6 +144,10 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         dock7.setWidget(self.zone_semanticsearch)
         area7 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.LeftDockWidgetArea, dock7)
 
+        dock8 = QtAds.CDockWidget("Test LLama", self)
+        dock8.setWidget(self.zone_testllama)
+        area8 = self.dock_manager.addDockWidget(QtAds.DockWidgetArea.RightDockWidgetArea, dock8)
+
         self.dock_widgets = {
             "module": dock1,
             "main": dock2,
@@ -149,6 +156,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
             "online_search": dock5,
             "advanced_search": dock6,
             "semantic_search": dock7,
+            "test_llama": dock8,
         }
 
         self._setupMenuAction()
@@ -169,6 +177,7 @@ class LMainWindow(QMainWindow, Ui_MainWindow2):
         self.menuRecover_layout.addAction(self.dock_widgets["online_search"].toggleViewAction())
         self.menuRecover_layout.addAction(self.dock_widgets["advanced_search"].toggleViewAction())
         self.menuRecover_layout.addAction(self.dock_widgets["semantic_search"].toggleViewAction())
+        self.menuRecover_layout.addAction(self.dock_widgets["test_llama"].toggleViewAction())
 
         # self.actionNote_Browser.triggered.connect
         # self.actionNote_View.triggered.connect
