@@ -1,2 +1,7 @@
 papers/
 test utils/
+
+*.dpr
+
+__pycache__/
+*.py[cod]
